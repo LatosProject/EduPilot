@@ -1,6 +1,6 @@
 # schema/User.py
 from datetime import datetime
-from pydantic import BaseModel, StrictStr, Field
+from pydantic import BaseModel, HttpUrl, StrictStr, Field
 from sqlalchemy.orm import relationship
 
 
@@ -13,6 +13,8 @@ class User(BaseModel):
     created_at: datetime = Field(..., alias="created_at", description="创建时间")
     last_login: datetime = Field(..., alias="last_login", description="最后登录时间")
     model_config = {"populate_by_name": True, "from_attributes": True}
+    profile_name: str = None  # 可为空，默认 None
+    avatar_url: HttpUrl  # 必填，没有默认值
 
 
 class UserProfile(BaseModel):
