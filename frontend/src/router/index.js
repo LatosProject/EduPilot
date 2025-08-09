@@ -1,102 +1,65 @@
+// src/router/index.js
+
+// 从 Vue Router 导入创建路由的方法
 import { createRouter, createWebHistory } from 'vue-router'
-import HomePage from '../pages/HomePage.vue'
-import LoginPage from '../pages/LoginPage.vue'
-import SettingsPage from '../pages/SettingsPage.vue'
-import { verifyToken, refreshToken } from '../api/auth'
 
+// 导入页面组件
+import HomePage from '../views/HomePage.vue'
+import LoginPage from '../views/LoginPage.vue'
+import SettingsPage from '../views/SettingsPage.vue'
+import StudyPage from '../views/StudyPage.vue'
 
+// 导入自定义路由守卫（authGuard 用来做登录权限校验）
+import { authGuard } from './guards'
 
+// 路由表
 const routes = [
+  // 首页（需要登录权限）
   {
     path: '/',
     name: 'Home',
     component: HomePage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true } // 自定义 meta 标记，表示此路由需要身份验证
   },
+
+  // 登录页（不需要登录即可访问）
   {
     path: '/login',
     name: 'Login',
     component: LoginPage
   },
+
+  // 作业详情页（当前使用 HomePage 组件作为占位）
   {
-    path: '/assignment/:id',
+    path: '/assignment/:id', // 动态路由，:id 为作业 ID
     name: 'AssignmentDetail',
     component: HomePage
   },
+
+  // 设置页
   {
     path: '/settings',
     name: 'Settings',
     component: SettingsPage
+  },
+
+  // 学习页面
+  {
+    path: '/study',
+    name: 'Study',
+    component: StudyPage
   }
-  // 后续可加更多页面
 ]
 
+// 创建路由实例
 const router = createRouter({
-  history: createWebHistory(),
-  routes
+  history: createWebHistory(), // 使用 HTML5 history 模式
+  routes // 路由表
 })
 
-async function isTokenValid() {
-  try {
-    const result = await verifyToken()
-    return result.status
-  } catch {
-    return null
-  }
-}
+// 全局前置守卫
+// 每次路由跳转前都会执行 authGuard（用来检查用户是否已登录）
+router.beforeEach(authGuard)
 
-async function tryRefreshToken() {
-  try {
-    const res = await refreshToken()
-    localStorage.setItem('access_token', res.access_token)
-    return true
-  } catch {
-    return false
-  }
-}
-
-function redirectToLoginOrNext(to, next) {
-  if (to.name !== 'Login') {
-    return next({ name: 'Login' })
-  }
-  return next()
-}
-
-function redirectToHomeOrNext(to, next) {
-  if (to.name === 'Login') {
-    return next({ name: 'Home' })
-  }
-  return next()
-}
-
-router.beforeEach(async (to, from, next) => {
-  const token = localStorage.getItem('access_token')
-
-  if (!token && to.meta.requiresAuth) {
-    return redirectToLoginOrNext(to, next)
-  }
-
-  if (token) {
-    const status = await isTokenValid()
-
-    switch (status) {
-      case 1002: // token过期，尝试刷新
-        const refreshed = await tryRefreshToken()
-        if (refreshed) {
-          // 刷新成功，跳转首页
-          return next({ name: 'Home' })
-        }
-        // 刷新失败，去登录
-        return redirectToLoginOrNext(to, next)
-      case 0: // token有效
-        return redirectToHomeOrNext(to, next)
-      default: // 其他状态异常
-        return redirectToLoginOrNext(to, next)
-    }
-  }
-
-  // 无token且不需要鉴权的路由
-  return next()
-})
-
+// 导出路由实例，供 main.js 挂载到应用
 export default router

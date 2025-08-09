@@ -37,11 +37,10 @@ const handleLogin = async () => {
         const token = res.data?.data?.access_token
         if (token) {
             localStorage.setItem('access_token', token)
-            console.log('Login successful, token:', token)
             router.push('/')
         }
         else {
-            error.value = 'Lgoin failed, please try again'
+            error.value = 'Login failed, please try again'
         }
     } catch (err) {
         if (err.response && err.response.data) {

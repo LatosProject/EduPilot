@@ -89,7 +89,7 @@ async def profile_route(current_user: User = Depends(get_current_user)):
 
 @router.post(
     "/refresh",
-    dependencies=[Depends(rate_limiter(limit=10, windows=60))],
+    # dependencies=[Depends(rate_limiter(limit=10, windows=60))],
     response_model=Union[LoginResponse, ErrorResponse],
 )
 async def refresh_token_route(

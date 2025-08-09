@@ -1,13 +1,9 @@
 <template>
-  <mdui-card
-    :class="selected ? 'card-selected' : 'card-default'"
-  >
+  <mdui-card :class="selected ? 'card-selected' : 'card-default'">
     <div style="min-height: 72px;">
       <div
-        style="height: 48px; width: 300px; padding-left: 16px; padding-top: 18px; display: flex; align-items: center;"
-      >
-        <div
-          style="
+        style="height: 48px; width: 300px; padding-left: 16px; padding-top: 18px; display: flex; align-items: center;">
+        <div style="
             width: 40px;
             height: 40px;
             background-color: #eaddff;
@@ -22,14 +18,12 @@
             line-height: 24px;
             letter-spacing: 0.1px;
             color: #4f378a;
-          "
-        >
+          ">
           {{ title ? title.charAt(0).toUpperCase() : '' }}
         </div>
 
         <div style="flex: 1; display: flex; flex-direction: column; padding-left: 8px;">
-          <p
-            style="
+          <p style="
               font-family: 'Roboto', sans-serif;
               font-weight: 600;
               font-size: 16px;
@@ -38,12 +32,10 @@
               color: #1d1b20;
               margin: 0;
               padding-top: 2px;
-            "
-          >
+            ">
             {{ title }}
           </p>
-          <p
-            style="
+          <p style="
               font-family: 'Roboto', sans-serif;
               font-weight: 400;
               font-size: 14px;
@@ -52,8 +44,7 @@
               color: #1d1b20;
               margin: 0;
               padding-bottom: 2px;
-            "
-          >
+            ">
             {{ deadline }}
           </p>
         </div>
@@ -62,37 +53,26 @@
 
     <div style="flex: 1; display: flex; flex-direction: column;">
       <div style="height: 40px; padding: 8px 16px 0 24px;">
-        <p
-          style="
+        <p style="
             font-size: 14px;
             color: rgb(var(--mdui-color-on-surface-variant));
             margin: 0;
-          "
-        >
+          ">
           {{ content }}
         </p>
       </div>
-      <div
-        style="
+      <div style="
           flex: 1;
           display: flex;
           justify-content: flex-end;
           align-items: flex-end;
           padding: 0 16px 16px 0;
-        "
-      >
-        <mdui-button
-          class="on-surface-variant"
-          variant="outlined"
-          style="margin-right: 8px;"
-          @click.stop="onButtonClick"
-        >
+        ">
+        <mdui-button class="on-surface-variant" variant="outlined" style="margin-right: 8px;"
+          @click.stop="onButtonClick">
           忽略
         </mdui-button>
-        <mdui-button
-          variant="filled"
-          @click.stop="onButtonClick"
-        >
+        <mdui-button variant="filled" @click.stop="onButtonClick">
           提交
         </mdui-button>
       </div>
@@ -110,7 +90,6 @@ const props = defineProps({
 
 function onButtonClick() {
   console.log('按钮被点击');
-  // 这里可以加按钮点击逻辑
 }
 </script>
 
@@ -123,7 +102,8 @@ function onButtonClick() {
   padding: 0;
   box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.2);
   background-color: rgb(var(--mdui-color-surface));
-  cursor: default; /* 关闭点击手型 */
+  cursor: default;
+  /* 关闭点击手型 */
   transition: box-shadow 0.2s ease;
 }
 

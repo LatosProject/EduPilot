@@ -1,29 +1,21 @@
 <template>
-  <div
-    style="
+  <div style="
       height: 40px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 2px;
       margin-top: 16px;
-    "
-  >
-    <mdui-button
-      v-for="(btn, i) in buttons"
-      :key="i"
-      :variant="btn.selected ? 'filled' : 'tonal'"
-      :icon="btn.selected ? 'star' : ''"
-      style="flex: 1"
-      @click="selectButton(i)"
-    >
+    ">
+    <mdui-button v-for="(btn, i) in buttons" :key="i" :variant="btn.selected ? 'filled' : 'tonal'"
+      :icon="btn.selected ? 'star' : ''" style="flex: 1" @click="selectButton(i)">
       {{ btn.label }}
     </mdui-button>
   </div>
 </template>
 
 <script setup>
-import { reactive, watchEffect, defineEmits } from 'vue';
+import { reactive, defineEmits } from 'vue';
 
 const emit = defineEmits(['status-change']);
 
