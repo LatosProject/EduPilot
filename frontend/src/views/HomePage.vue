@@ -78,7 +78,7 @@ onMounted(() => {
   fetchAssignments(currentStatus.value)
   intervalId = setInterval(() => {
     fetchAssignments(currentStatus.value)
-  }, 15000)
+  }, 60000)
 })
 
 onUnmounted(() => {

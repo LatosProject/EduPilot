@@ -1,10 +1,11 @@
 // src/router/guards.js
 
 // 从认证服务中导入相关方法和常量
+
 import {
-    getAccessToken,     // 从 localStorage 获取 access_token
-    verifyToken,       // 调用后端接口验证 token 是否有效
-    refreshToken, // 调用后端刷新 token
+    getAccessToken,
+    refreshToken,
+    verifyToken
 } from '../api/auth'
 
 // 跳转到登录页的辅助函数
@@ -32,7 +33,6 @@ export async function authGuard(to, from, next) {
     const result = await verifyToken()
     const status = result.status
 
-    console.log(status)
     if (status === 1002) {
         const result = await refreshToken()
         const refreshed = result.access_token

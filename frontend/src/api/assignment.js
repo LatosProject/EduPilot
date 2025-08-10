@@ -1,4 +1,5 @@
 // src/apis/index.js
+
 import instance from "."
 
 /**
@@ -14,11 +15,6 @@ import instance from "."
  */
 export async function getAssignments(classUuid, page = 1, size = 10, order_by = 'created_at', order = 'asc', status = '') {
   try {
-    // 从本地存储获取token，并设置请求头（如果有token）
-    const token = localStorage.getItem('access_token')
-    if (token) {
-      instance.defaults.headers.Authorization = `Bearer ${token}`
-    }
 
     // 组装请求 URL
     const url = `/api/v1/classes/${classUuid}/homeworks`
