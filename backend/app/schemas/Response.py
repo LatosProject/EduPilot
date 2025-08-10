@@ -1,8 +1,10 @@
 # schemas/Response.py
-from datetime import datetime
 import json
-from pydantic import BaseModel, StrictInt, StrictStr, Field, field_validator
-from typing import List, Optional, Dict, Any
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field, StrictInt, StrictStr, field_validator
+
 from schemas.User import User
 
 
@@ -46,6 +48,7 @@ class AssignmentData(BaseModel):
     uuid: StrictStr = Field(..., description="作业ID")
     title: StrictStr = Field(..., description="作业标题")
     content: Optional[StrictStr] = Field(None, description="作业内容")
+    description: Optional[StrictStr] = Field(None, description="作业解释")
     deadline: Optional[datetime] = Field(None, description="截止日期")
     max_score: Optional[StrictInt] = Field(None, description="最高分")
     allow_late_submission: Optional[bool] = Field(False, description="是否允许迟交")

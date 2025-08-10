@@ -11,11 +11,12 @@
         <SearchCard />
         <!-- 搜索框下方按钮组，绑定筛选事件 -->
         <TaskButtonGroup @status-change="onStatusChange" />
-        <OverlayScrollbarsComponent :options="options" style="height: 100%; width: 100%;margin-top: 16px">
+        <OverlayScrollbarsComponent :options="options"
+          style=" height:calc(100vh - 144px); width: 100%;margin-top: 16px">
           <div style="margin-left: 4px;margin-right: 4px ;margin-top: 4px">
             <AssignmentCard style="margin-bottom: 16px;" v-for="assignment in assignments" :key="assignment.uuid"
               :title="assignment.title" @click="goDetail(assignment.uuid)"
-              :deadline="formatDeadline(assignment.deadline)" :content="assignment.content"
+              :deadline="formatDeadline(assignment.deadline)" :description="assignment.description"
               :selected="assignment.uuid !== selectedId" />
           </div>
         </OverlayScrollbarsComponent>
@@ -29,8 +30,21 @@
           box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.20);
           border-radius: var(--mdui-shape-corner-extra-large);
         ">
+        <div style="display: flex; align-items: center;height:56px">
+          <mdui-button-icon icon="question_answer--outlined"
+            style="margin-left: auto;margin-right: 8px;"></mdui-button-icon>
+          <mdui-button-icon icon="dark_mode--outlined" style="margin-right: 16px"
+            @click="toggleTheme"></mdui-button-icon>
+        </div>
+
         <!-- 内容 -->
-        <p v-if="currentAssignment">{{ currentAssignment.title }}</p>
+        <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
+          <h1>{{ currentAssignment.title }}</h1>
+          <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
+              }}</small></h3>
+          <p>{{ currentAssignment.content }}</p>
+        </div>
+
       </div>
     </div>
   </div>
@@ -60,6 +74,19 @@ const options = ref({
     autoHideDelay: 500,
   },
 })
+function toggleTheme() {
+  const html = document.documentElement;
+  if (html.classList.contains('mdui-theme-dark')) {
+    html.classList.remove('mdui-theme-dark');
+    html.classList.add('mdui-theme-light');
+    localStorage.setItem('theme', 'light'); // 保存为 light
+  } else {
+    html.classList.remove('mdui-theme-light');
+    html.classList.add('mdui-theme-dark');
+    localStorage.setItem('theme', 'dark'); // 保存为 dark
+  }
+}
+
 
 // 跳转详情页并选中
 function goDetail(id) {

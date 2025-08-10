@@ -34,21 +34,24 @@ const routes = [
   {
     path: '/assignment/:id', // 动态路由，:id 为作业 ID
     name: 'AssignmentDetail',
-    component: HomePage
+    component: HomePage,
+    meta: { requiresAuth: true }
   },
 
   // 设置页
   {
     path: '/settings',
     name: 'Settings',
-    component: SettingsPage
+    component: SettingsPage,
+    meta: { requiresAuth: true }
   },
 
   // 学习页面
   {
     path: '/study',
     name: 'Study',
-    component: StudyPage
+    component: StudyPage,
+    meta: { requiresAuth: true }
   }
 ]
 

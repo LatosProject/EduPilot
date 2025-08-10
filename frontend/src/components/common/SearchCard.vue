@@ -22,7 +22,7 @@
         line-height: 24px;
         letter-spacing: 0.5px;
         font-weight: 400;
-        font-family: 'Roboto';
+        font-family: 'Noto Sans SC';
         user-select: none;
         color: rgb(var(--mdui-color-on-surface-variant));
       ">
@@ -30,7 +30,7 @@
     </div>
     <template v-if="user && user.avatar_url">
       <mdui-button-icon style="margin-left: auto; margin-right: 8px">
-        <img :src="user.avatar_url" style="background-color:#ffff" alt="avatar" />
+        <img :src="user.avatar_url" style="background-color:rgb(var(--mdui-color-primary-container));" alt="avatar" />
       </mdui-button-icon>
     </template>
     <template v-else>
