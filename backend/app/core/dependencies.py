@@ -1,14 +1,16 @@
 # core/dependencies.py
 import logging
+
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from core import exceptions
-from utils.token import verify_access_token
+from db.connector import DatabaseConnector
 from models.user import User
 from schemas.User import User
 from services.auth import get_user_by_uuid
-from db.connector import DatabaseConnector
-from sqlalchemy.ext.asyncio import AsyncSession
+from utils.token import verify_access_token
 
 logger = logging.getLogger("core.dependencies")
 

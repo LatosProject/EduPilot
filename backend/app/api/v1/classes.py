@@ -1,8 +1,29 @@
 import logging
 from typing import Optional, Union
+
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from core.dependencies import get_current_user
+from core.response import to_response
+from core.security import is_admin, is_teacher, is_teacher_or_admin
+from db.connector import DatabaseConnector
 from schemas import User
+from schemas.Request import (
+    CreateAssignmentRequest,
+    CreateClassRequest,
+    JoinClassRequest,
+    UpdateClassRequest,
+)
+from schemas.Response import (
+    ApiResponse,
+    AssignmentData,
+    AssignmentResponse,
+    ClassData,
+    ErrorResponse,
+    PageData,
+    Pagination,
+)
 from services.classes import (
     create_assignment,
     create_class,
@@ -13,25 +34,6 @@ from services.classes import (
     join_class,
     update_class,
 )
-from core.security import is_admin, is_teacher, is_teacher_or_admin
-from db.connector import DatabaseConnector
-from schemas.Response import (
-    ApiResponse,
-    AssignmentData,
-    AssignmentResponse,
-    ClassData,
-    ErrorResponse,
-    PageData,
-    Pagination,
-)
-from schemas.Request import (
-    CreateAssignmentRequest,
-    CreateClassRequest,
-    JoinClassRequest,
-    UpdateClassRequest,
-)
-from sqlalchemy.ext.asyncio import AsyncSession
-from core.response import to_response
 
 router = APIRouter(prefix="/classes", tags=["Classes"])
 logger = logging.getLogger("api.v1.classes")
@@ -340,3 +342,8 @@ async def get_class_route(
     """
     class_obj = await get_class(db, class_uuid, current_user.role)
     return to_response(data=ClassData.model_validate(class_obj))
+
+
+# TO-DO
+async def get_classes_route():
+    pass

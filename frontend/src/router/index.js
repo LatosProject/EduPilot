@@ -1,16 +1,17 @@
 // src/router/index.js
 
 // 从 Vue Router 导入创建路由的方法
+
 import { createRouter, createWebHistory } from 'vue-router'
 
-// 导入页面组件
 import HomePage from '../views/HomePage.vue'
 import LoginPage from '../views/LoginPage.vue'
 import SettingsPage from '../views/SettingsPage.vue'
 import StudyPage from '../views/StudyPage.vue'
+import { authGuard } from './guards'
 
 // 导入自定义路由守卫（authGuard 用来做登录权限校验）
-import { authGuard } from './guards'
+
 
 // 路由表
 const routes = [

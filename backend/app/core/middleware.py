@@ -1,8 +1,9 @@
-from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
 import logging
 import time
 import traceback
+
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # 初始化中间件的专属 logger
 logger = logging.getLogger("core.middleware")

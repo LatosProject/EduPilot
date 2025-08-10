@@ -1,26 +1,19 @@
 # routers/auth.py
 import logging
-from fastapi import APIRouter, Cookie, Depends
-from core.response import to_response
-from core.rate_limit import rate_limiter
-from schemas.User import User
-from schemas.Response import (
-    LoginResponse,
-    ErrorResponse,
-    LoginData,
-    ApiResponse,
-)
-from schemas.Request import LoginRequest
-from services.auth import authenticate_user, get_user_by_uuid
-from utils.token import (
-    create_access_token,
-    create_fresh_token,
-    verify_fresh_token,
-)
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Union
-from db.connector import DatabaseConnector
+
+from fastapi import APIRouter, Cookie, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from core.dependencies import get_current_user
+from core.rate_limit import rate_limiter
+from core.response import to_response
+from db.connector import DatabaseConnector
+from schemas.Request import LoginRequest
+from schemas.Response import ApiResponse, ErrorResponse, LoginData, LoginResponse
+from schemas.User import User
+from services.auth import authenticate_user, get_user_by_uuid
+from utils.token import create_access_token, create_fresh_token, verify_fresh_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
