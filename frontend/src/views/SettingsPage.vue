@@ -19,17 +19,17 @@
             <h2>通用</h2>
           </div>
           <div
-            style="width: 680px; margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
+            style="width: 600px ; margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
             跟随系统主题
             <mdui-switch id="themeSwitch" checked ref="themeSwitch"></mdui-switch>
           </div>
-          <div
-            style="width: 680px; margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
-            🏳‍🌈
-            <mdui-switch></mdui-switch>
+          <div style=" width: 600px ; margin-top: 24px; display: flex; align-items: center; justify-content:
+            space-between;">
+            设置主题色
+            <mdui-button-icon icon="open_in_new" @click="openColorPickerDialog"></mdui-button-icon>
           </div>
           <div
-            style="width: 680px; margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
+            style="width: 600px ; margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
             访问源代码
             <mdui-button-icon href="https://github.com/LatosProject/EduPilot" icon="open_in_new"></mdui-button-icon>
           </div>
@@ -42,6 +42,11 @@
         <footer style="text-align: left; font-size: 12px; color: #888; padding: 8px 0;">
           © 2025 EduPilot, Latos. All rights reserved.
         </footer>
+
+        <mdui-dialog ref="colorPickerDialog" class="colorPickerDialog" close-on-overlay-click close-on-esc>
+          <div style="max-width: 320px" id="picker"></div>
+        </mdui-dialog>
+
       </div>
     </div>
   </div>
@@ -53,13 +58,35 @@ import { useRouter } from 'vue-router'
 import { setTheme } from 'mdui/functions/setTheme.js';
 const router = useRouter()
 const themeSwitch = ref(null) // 用ref绑定元素
+const colorPickerDialog = ref(null)
+import iro from '@jaames/iro';
+import { setColorScheme } from 'mdui/functions/setColorScheme.js';
+
 
 function logout() {
   localStorage.removeItem('access_token')
   router.push('/login')
 }
-
+function openColorPickerDialog() {
+  if (colorPickerDialog.value) {
+    colorPickerDialog.value.open = true
+  }
+}
 onMounted(() => {
+  let savedThemeColor = localStorage.getItem('themeColor');
+  var colorPicker = new iro.ColorPicker("#picker", {
+    width: 320,
+    color: savedThemeColor
+  });
+  setColorScheme(savedThemeColor);
+
+  // 监听颜色变化，实时更新主题色
+  colorPicker.on('color:change', (color) => {
+    setColorScheme(color.hexString);
+    localStorage.setItem('themeColor', color.hexString);  // 可选，保存用户选色
+  });
+
+
   // 初始化开关状态和主题
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme === 'auto') {
