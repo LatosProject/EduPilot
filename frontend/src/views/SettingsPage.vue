@@ -76,6 +76,8 @@ onMounted(() => {
   let savedThemeColor = localStorage.getItem('themeColor');
   var colorPicker = new iro.ColorPicker("#picker", {
     width: 320,
+    borderWidth: 2,
+    // borderColor: "#fff",
     color: savedThemeColor
   });
   setColorScheme(savedThemeColor);
