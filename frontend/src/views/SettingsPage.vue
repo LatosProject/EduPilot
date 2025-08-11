@@ -78,7 +78,7 @@ onMounted(() => {
     width: 320,
     borderWidth: 2,
     // borderColor: "#fff",
-    color: savedThemeColor
+    color: savedThemeColor,
   });
   setColorScheme(savedThemeColor);
 
