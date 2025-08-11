@@ -7,7 +7,7 @@
           margin-top: 24px;
           min-width: 480px;
           flex-grow: 1;
-          margin-left: 16px;
+          margin-left: 8px;
           margin-right: 24px;
           background-color: rgb(var(--mdui-color-surface-container-lowest));
           box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.20);
