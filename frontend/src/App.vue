@@ -11,6 +11,7 @@ function loadTheme() {
   let savedThemeColor = localStorage.getItem('themeColor');
   if (!savedThemeColor) {
     savedThemeColor = '#2962FF'; // 默认颜色
+    localStorage.setItem('themeColor', savedThemeColor);
   }
   setColorScheme(savedThemeColor)
   if (savedTheme === 'dark') {

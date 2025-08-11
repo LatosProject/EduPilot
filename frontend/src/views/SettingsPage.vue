@@ -80,6 +80,7 @@ onMounted(() => {
   });
   setColorScheme(savedThemeColor);
 
+
   // 监听颜色变化，实时更新主题色
   colorPicker.on('color:change', (color) => {
     setColorScheme(color.hexString);
