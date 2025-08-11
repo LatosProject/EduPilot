@@ -1,6 +1,8 @@
 // composables/useAssignments.js
-import { ref, computed, watch } from 'vue'
+
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+
 import { getAssignments } from '../api/assignment'
 
 /**
@@ -20,28 +22,31 @@ export function useAssignments(classUuid) {
         assignments.value.find(a => a.uuid === selectedId.value)
     )
 
-    /**
-     * 异步函数：根据筛选状态拉取作业列表
-     * @param {string} status 筛选状态，默认为空，代表全部作业
-     */
     async function fetchAssignments(status = '') {
         try {
-            // 调用接口获取作业数据
-            const res = await getAssignments(classUuid, 1, 10, 'created_at', 'asc', status)
-            assignments.value = res.items  // 更新响应式作业列表
+            const res = await getAssignments(classUuid, 1, 10, 'created_at', 'asc', status);
+            assignments.value = res.items;
 
-            // 路由中带有作业 id 时，优先设置为选中
-            if (route.params.id) {
-                selectedId.value = route.params.id
-            }
-            // 否则默认选中第一个作业（若列表非空，且未选中任何作业）
-            else if (assignments.value.length > 0 && !selectedId.value) {
-                selectedId.value = assignments.value[0].uuid
+            const idInList = route.params.id && assignments.value.some(a => a.uuid === route.params.id);
+
+            if (idInList) {
+                // 路由里的id有效，使用它
+                selectedId.value = route.params.id;
+            } else if (assignments.value.length > 0) {
+                // 路由里的id无效或不存在，默认选中第一个作业
+                selectedId.value = assignments.value[0].uuid;
+                // 同步路由参数，保证url和状态一致
+                router.replace({ name: 'AssignmentDetail', params: { id: selectedId.value } });
+            } else {
+                // 列表为空，清空选中id
+                selectedId.value = null;
+                router.replace({ name: 'AssignmentDetail', params: { id: null } });
             }
         } catch (e) {
-            console.error('获取任务失败', e)
+            console.error('获取任务失败', e);
         }
     }
+
 
     // 监听路由参数中的 id 变化，自动更新当前选中作业 id
     watch(() => route.params.id, (newId) => {

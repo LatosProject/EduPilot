@@ -49,7 +49,7 @@
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
             <h1>{{ currentAssignment.title }}</h1>
             <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
-                }}</small></h3>
+            }}</small></h3>
             <p>{{ currentAssignment.content }}</p>
           </div>
         </OverlayScrollbarsComponent>
@@ -99,13 +99,19 @@ const options = ref({
   },
 })
 function toggleTheme() {
-  const theme = getTheme()
+  let theme = getTheme();
+  if (theme === 'auto') {
+    // 判断实际生效的主题
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    theme = prefersDark ? 'dark' : 'light';
+  }
+
   if (theme === "dark") {
-    setTheme("light")
-    localStorage.setItem('theme', 'light'); // 保存为 light
+    setTheme("light");
+    localStorage.setItem('theme', 'light');
   } else {
-    setTheme("dark")
-    localStorage.setItem('theme', 'dark'); // 保存为 dark
+    setTheme("dark");
+    localStorage.setItem('theme', 'dark');
   }
 }
 

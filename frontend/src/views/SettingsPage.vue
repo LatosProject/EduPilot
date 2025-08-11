@@ -44,7 +44,7 @@
         </footer>
 
         <mdui-dialog ref="colorPickerDialog" class="colorPickerDialog" close-on-overlay-click close-on-esc>
-          <div style="max-width: 320px" id="picker"></div>
+          <div style="max-width: 320px ; overflow: hidden;" id="picker"></div>
         </mdui-dialog>
 
       </div>
