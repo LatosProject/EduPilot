@@ -83,6 +83,8 @@ import { useAssignments } from '../composables/useAssignments'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-vue'
 import 'overlayscrollbars/styles/overlayscrollbars.css'
 import { formatDeadline } from '../utils/date'
+import { setTheme } from 'mdui/functions/setTheme.js';
+import { getTheme } from 'mdui/functions/getTheme.js';
 const classUuid = 'e0453e99-a7e4-43fa-a480-5272add34867'
 
 const { assignments, selectedId, currentStatus, currentAssignment, fetchAssignments } = useAssignments(classUuid)
@@ -97,14 +99,12 @@ const options = ref({
   },
 })
 function toggleTheme() {
-  const html = document.documentElement;
-  if (html.classList.contains('mdui-theme-dark')) {
-    html.classList.remove('mdui-theme-dark');
-    html.classList.add('mdui-theme-light');
+  const theme = getTheme()
+  if (theme === "dark") {
+    setTheme("light")
     localStorage.setItem('theme', 'light'); // 保存为 light
   } else {
-    html.classList.remove('mdui-theme-light');
-    html.classList.add('mdui-theme-dark');
+    setTheme("dark")
     localStorage.setItem('theme', 'dark'); // 保存为 dark
   }
 }

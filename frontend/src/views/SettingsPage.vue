@@ -21,12 +21,17 @@
           <div
             style="width: 680px; margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
             跟随系统主题
-            <mdui-switch></mdui-switch>
+            <mdui-switch id="themeSwitch" checked ref="themeSwitch"></mdui-switch>
           </div>
           <div
             style="width: 680px; margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
             🏳‍🌈
             <mdui-switch></mdui-switch>
+          </div>
+          <div
+            style="width: 680px; margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
+            访问源代码
+            <mdui-button-icon href="https://github.com/LatosProject/EduPilot" icon="open_in_new"></mdui-button-icon>
           </div>
           <div style="margin-top: 24px;">
             <mdui-tooltip content="您确定要登出吗？">
@@ -42,12 +47,37 @@
   </div>
 </template>
 <script setup>
+import { ref, onMounted } from 'vue'
 import NavigationRail from '../components/common/NavigationRail.vue'
+import { useRouter } from 'vue-router'
+import { setTheme } from 'mdui/functions/setTheme.js';
+const router = useRouter()
+const themeSwitch = ref(null) // 用ref绑定元素
+
 function logout() {
-  // 1. 清除本地存储
   localStorage.removeItem('access_token')
-  // 2. 跳转到登录页
   router.push('/login')
 }
+
+onMounted(() => {
+  // 初始化开关状态和主题
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme === 'auto') {
+    themeSwitch.value.checked = true
+  } else {
+    themeSwitch.value.checked = false
+  }
+
+  // 绑定事件，响应用户操作
+  themeSwitch.value.addEventListener('change', () => {
+    if (themeSwitch.value.checked) {
+      setTheme('auto')
+      localStorage.setItem('theme', 'auto')
+    } else {
+      setTheme('light')
+      localStorage.setItem('theme', 'light')
+    }
+  })
+})
 
 </script>

@@ -2,22 +2,21 @@
   <router-view />
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
+import { setTheme } from 'mdui/functions/setTheme.js';
 // 页面加载时执行，恢复主题
 function loadTheme() {
   const savedTheme = localStorage.getItem('theme');
-  const html = document.documentElement;
   if (savedTheme === 'dark') {
-    html.classList.add('mdui-theme-dark');
-    html.classList.remove('mdui-theme-light');
+    setTheme('dark');
   } else if (savedTheme === 'light') {
-    html.classList.add('mdui-theme-light');
-    html.classList.remove('mdui-theme-dark');
+    setTheme('light');
   } else {
-    // 默认主题，如果你想默认暗黑就写下面这句
-    // html.classList.add('mdui-theme-dark');
+    // 没有保存偏好，或是 auto，采用跟随系统
+    setTheme('auto');
   }
 }
+
 onMounted(() => {
   loadTheme()
 })
