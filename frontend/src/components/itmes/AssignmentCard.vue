@@ -67,21 +67,7 @@
           {{ description }}
         </p>
       </div>
-      <div style="
-          flex: 1;
-          display: flex;
-          justify-content: flex-end;
-          align-items: flex-end;
-          padding: 0 16px 16px 0;
-        ">
-        <mdui-button class="on-surface-variant" variant="outlined" style="margin-right: 8px;"
-          @click.stop="onButtonClick">
-          忽略
-        </mdui-button>
-        <mdui-button variant="filled" @click.stop="onButtonClick">
-          提交
-        </mdui-button>
-      </div>
+
     </div>
   </mdui-card>
 </template>
@@ -94,9 +80,6 @@ const props = defineProps({
   description: String,
 });
 
-function onButtonClick() {
-  console.log('按钮被点击');
-}
 </script>
 
 <style scoped>

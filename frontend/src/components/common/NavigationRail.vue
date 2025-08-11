@@ -1,26 +1,15 @@
 <template>
-  <mdui-navigation-rail
-    ref="railRef"
-    style="padding-top: 8px"
-    contained
-  >
+  <mdui-navigation-rail ref="railRef" style="padding-top: 8px" contained>
     <mdui-button-icon icon="menu" slot="top"></mdui-button-icon>
     <mdui-fab class="fab-purple" lowered icon="edit--rounded" slot="top"></mdui-fab>
-
-    <mdui-navigation-rail-item
-      v-for="item in navItems"
-      :key="item.path"
-      class="label-medium secondary"
-      :icon="item.icon"
-      :value="item.value"
-      @click="go(item)"
-    >
+    <mdui-navigation-rail-item v-for="item in navItems" :key="item.path" class="label-medium secondary"
+      :icon="item.icon" :value="item.value" @click="go(item)">
       {{ item.label }}
     </mdui-navigation-rail-item>
   </mdui-navigation-rail>
 </template>
 
-<script setup> 
+<script setup>
 import { useRouter, useRoute } from 'vue-router'
 
 import { onMounted, watch, ref } from 'vue'
@@ -68,4 +57,3 @@ watch(
   color: white;
 } */
 </style>
-

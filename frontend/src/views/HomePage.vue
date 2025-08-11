@@ -6,7 +6,7 @@
     <!-- 右侧内容区域 -->
     <div style="flex-grow: 1; display: flex; padding-left: 8px; padding-top: 24px;">
       <!-- 左侧固定宽度区域 -->
-      <div style="width: 480px;">
+      <div style="width: 480px; min-width: 480px;">
         <!-- 顶部搜索卡片 -->
         <SearchCard />
         <!-- 搜索框下方按钮组，绑定筛选事件 -->
@@ -20,9 +20,12 @@
               :selected="assignment.uuid !== selectedId" />
           </div>
         </OverlayScrollbarsComponent>
+
       </div>
+
       <!-- 主体内容卡片容器 -->
       <div style="
+        min-width: 480px;
           flex-grow: 1;
           margin-left: 16px;
           margin-right: 24px;
@@ -31,20 +34,39 @@
           border-radius: var(--mdui-shape-corner-extra-large);
         ">
         <div style="display: flex; align-items: center;height:56px">
-          <mdui-button-icon icon="question_answer--outlined"
-            style="margin-left: auto;margin-right: 8px;"></mdui-button-icon>
-          <mdui-button-icon icon="dark_mode--outlined" style="margin-right: 16px"
-            @click="toggleTheme"></mdui-button-icon>
+
+          <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+            <mdui-button-icon icon="share--outlined"></mdui-button-icon>
+            <mdui-button-icon icon="question_answer--outlined"></mdui-button-icon>
+            <mdui-button-icon style="margin-right:16px" icon="dark_mode--outlined"
+              @click="toggleTheme"></mdui-button-icon>
+          </div>
         </div>
 
         <!-- 内容 -->
-        <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
-          <h1>{{ currentAssignment.title }}</h1>
-          <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
-              }}</small></h3>
-          <p>{{ currentAssignment.content }}</p>
+        <OverlayScrollbarsComponent :options="options"
+          style=" height:calc(100vh - 144px); width: 100%;margin-bottom: 8px">
+          <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
+            <h1>{{ currentAssignment.title }}</h1>
+            <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
+                }}</small></h3>
+            <p>{{ currentAssignment.content }}</p>
+          </div>
+        </OverlayScrollbarsComponent>
+        <div style="
+          flex: 1;
+          display: flex;
+          justify-content: flex-end;
+          align-items: flex-end;
+          padding: 0 16px 16px 0;
+        ">
+          <mdui-button class="on-surface-variant" variant="outlined" icon="delete" style="margin-right: 8px;">
+            忽略
+          </mdui-button>
+          <mdui-button variant="filled" end-icon="arrow_forward">
+            提交
+          </mdui-button>
         </div>
-
       </div>
     </div>
   </div>
