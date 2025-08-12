@@ -52,7 +52,16 @@ const routes = [
     name: 'Study',
     component: StudyPage,
     meta: { requiresAuth: true }
-  }
+  },
+  // 路由示例
+  {
+    path: '/login/username',
+    component: LoginPage,
+  },
+  {
+    path: '/login/password',
+    component: LoginPage,
+  },
 ]
 
 // 创建路由实例
