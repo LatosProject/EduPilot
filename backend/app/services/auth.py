@@ -1,13 +1,15 @@
 # services/auth.py
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
 from typing import Optional
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from schemas.Response import UpdateUserData
+
 from core import exceptions
 from models.user import User
+from schemas.Response import UpdateUserData
 from utils.auth_utils import hash_password, verify_password
 from utils.random import generate_uuid
 
@@ -215,7 +217,7 @@ async def authenticate_user(
         logger.error(f"数据库查询异常，登录失败: 用户名: {username} 错误: {e}")
         raise exceptions.DatabaseQueryError() from e
     if not verify_password(password, user.hashed_password):
-        raise exceptions.AuthenticationFailed(username)
+        raise exceptions.AuthenticationFailed(username=username)
     return user
 
 

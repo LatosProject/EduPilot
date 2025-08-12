@@ -15,6 +15,9 @@
         padding: 24px;
         overflow: hidden;
       ">
+            <!-- 绝对定位进度条 -->
+            <mdui-linear-progress v-if="isLoading"
+                style="position: absolute; left: 24px; top: 0; height: 4px; width: calc(100% - 48px);"></mdui-linear-progress>
             <span style="
           font-family: 'Noto Sans SC';
           font-size: 32px;
@@ -93,7 +96,7 @@ const passwordField = ref(null)
 const username = ref('')
 const password = ref('')
 const error = ref('')
-
+const isLoading = ref(false);
 const step = computed(() => (route.path.endsWith('password') ? 2 : 1))
 
 const onUsernameInput = (e) => {
@@ -118,6 +121,7 @@ const handleNext = () => {
 }
 
 const handleLogin = async () => {
+    isLoading.value = true; // 显示进度条
     error.value = ''
     if (!password.value) {
         passwordField.value?.setCustomValidity('密码不能为空')
@@ -136,17 +140,19 @@ const handleLogin = async () => {
         } else {
             passwordField.value?.setCustomValidity('登录失败，请重试')
             passwordField.value?.reportValidity()
+            isLoading.value = false;
         }
     } catch (err) {
         if (err.response && err.response.data) {
             passwordField.value?.setCustomValidity(err.response.data.message)
             passwordField.value?.reportValidity()
+            isLoading.value = false;
         }
     }
 }
 
 const handleRegister = () => {
-    alert('跳转到注册页面')
+    alert('此网站暂未开放，请联系网络管理员。')
 }
 
 watch(step, (newStep) => {
@@ -194,5 +200,9 @@ onMounted(() => {
 .slide-out-right {
     transform: translateX(100%);
     opacity: 0;
+}
+
+mdui-text-field::part(label) {
+    background-color: rgb(var(--mdui-color-surface-container-lowest));
 }
 </style>

@@ -40,8 +40,12 @@
 
         </div>
         <footer style="text-align: left; font-size: 12px; color: #888; padding: 8px 0;">
+          版本 0.1 Beta
+        </footer>
+        <footer style="text-align: left; font-size: 12px; color: #888; padding: 8px 0;">
           © 2025 EduPilot, Latos. All rights reserved.
         </footer>
+
 
         <mdui-dialog ref="colorPickerDialog" class="colorPickerDialog" close-on-overlay-click close-on-esc>
           <div style="max-width: 320px ; overflow: hidden;" id="picker"></div>
