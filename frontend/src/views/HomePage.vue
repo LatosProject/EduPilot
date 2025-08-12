@@ -11,15 +11,20 @@
         <SearchCard />
         <!-- 搜索框下方按钮组，绑定筛选事件 -->
         <TaskButtonGroup style="margin-bottom: 16px" @status-change="onStatusChange" />
-        <OverlayScrollbarsComponent :options="options" style=" height:calc(100vh - 144px); width: 100%;">
-          <div style="margin-left: 4px;margin-right: 4px ;margin-top: 4px">
-            <AssignmentCard style="margin-bottom: 16px;" v-for="assignment in assignments" :key="assignment.uuid"
-              :title="assignment.title" @click="goDetail(assignment.uuid)"
-              :deadline="formatDeadline(assignment.deadline)" :description="assignment.description"
-              :selected="assignment.uuid !== selectedId" />
-          </div>
-        </OverlayScrollbarsComponent>
+        <div style="position: relative;">
+          <!-- 阴影放这里，绝对定位相对这个容器 -->
+          <div class="top-shadow" v-show="showTopShadow"></div>
+          <OverlayScrollbarsComponent ref="scrollbarRef" :options="options"
+            style=" height:calc(100vh - 144px); width: 100%;">
+            <div style="margin-left: 4px;margin-right: 4px ;margin-top: 4px">
+              <AssignmentCard style="margin-bottom: 16px;" v-for="assignment in assignments" :key="assignment.uuid"
+                :title="assignment.title" @click="goDetail(assignment.uuid)"
+                :deadline="formatDeadline(assignment.deadline)" :description="assignment.description"
+                :selected="assignment.uuid !== selectedId" />
+            </div>
+          </OverlayScrollbarsComponent>
 
+        </div>
       </div>
 
       <!-- 主体内容卡片容器 -->
@@ -48,7 +53,7 @@
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
             <h1>{{ currentAssignment.title }}</h1>
             <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
-            }}</small></h3>
+                }}</small></h3>
             <p>{{ currentAssignment.content }}</p>
           </div>
         </OverlayScrollbarsComponent>
@@ -77,7 +82,7 @@ import NavigationRail from '../components/common/NavigationRail.vue'
 import SearchCard from '../components/common/SearchCard.vue'
 import TaskButtonGroup from '../components/common/TaskButtonGroup.vue'
 import AssignmentCard from '../components/itmes/AssignmentCard.vue'
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAssignments } from '../composables/useAssignments'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-vue'
@@ -91,7 +96,8 @@ const { assignments, selectedId, currentStatus, currentAssignment, fetchAssignme
 
 const route = useRoute()
 const router = useRouter()
-
+const showTopShadow = ref(false)
+const scrollbarRef = ref(null)
 const options = ref({
   scrollbars: {
     autoHide: 'leave',
@@ -116,6 +122,7 @@ function toggleTheme() {
 }
 
 
+
 // 跳转详情页并选中
 function goDetail(id) {
   selectedId.value = id
@@ -130,11 +137,30 @@ function onStatusChange(status) {
 
 let intervalId = null
 onMounted(() => {
+  const osInstance = scrollbarRef.value?.osInstance()
+  if (!osInstance) return
+
+  osInstance.elements().viewport.addEventListener('scroll', onScroll)
   fetchAssignments(currentStatus.value)
   intervalId = setInterval(() => {
     fetchAssignments(currentStatus.value)
   }, 60000)
 })
+
+onBeforeUnmount(() => {
+  const osInstance = scrollbarRef.value?.osInstance()
+  if (!osInstance) return
+
+  osInstance.elements().viewport.removeEventListener('scroll', onScroll)
+})
+
+function onScroll() {
+  const osInstance = scrollbarRef.value?.osInstance()
+  if (!osInstance) return
+
+  const scrollTop = osInstance.elements().viewport.scrollTop
+  showTopShadow.value = scrollTop > 0
+}
 
 onUnmounted(() => {
   clearInterval(intervalId)
@@ -148,3 +174,18 @@ watch(
   }
 )
 </script>
+
+<style>
+.top-shadow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), transparent);
+  z-index: 10;
+  border-radius: 8px;
+  /* 你可以调整数值，越大圆角越明显 */
+}
+</style>
