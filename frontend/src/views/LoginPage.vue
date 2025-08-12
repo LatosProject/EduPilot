@@ -12,7 +12,7 @@
         background-color: rgb(var(--mdui-color-surface-container-lowest));
         box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.2);
         border-radius: var(--mdui-shape-corner-extra-large);
-        padding: 32px;
+        padding: 24px;
         overflow: hidden;
       ">
             <span style="
@@ -45,8 +45,8 @@
                 <form @submit.prevent="handleNext" class="slide-form"
                     :class="{ 'slide-out-left': step === 2, 'slide-in-left': step === 1 }"
                     style="position: absolute; width: 100%;">
-                    <mdui-text-field ref="usernameField" style="margin-top: 12px;" :value="username"
-                        @input="onUsernameInput" variant="outlined" label="用户名" type="text" />
+                    <mdui-text-field ref="usernameField" :disabled="isUsernameDisabled" style="margin-top: 12px;"
+                        :value="username" @input="onUsernameInput" variant="outlined" label="用户名" type="text" />
                 </form>
 
                 <!-- 密码输入框 -->
@@ -102,6 +102,9 @@ const onUsernameInput = (e) => {
 const onPasswordInput = (e) => {
     password.value = e.target.value
 }
+
+const isUsernameDisabled = computed(() => step.value === 2)
+
 const handleNext = () => {
     error.value = ''
     if (!username.value) {
