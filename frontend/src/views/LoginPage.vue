@@ -70,7 +70,7 @@
         ">
                 <mdui-button type="button"
                     style="color: rgb(var(--mdui-color-primary-light)); background-color: transparent;"
-                    @click="handleRegister">注册账号</mdui-button>
+                    @click="step === 1 ? handleRegister() : handleBack()"> {{ step === 1 ? '注册账号' : '返回' }}</mdui-button>
             </div>
 
             <div style="position: absolute; right: 18px; bottom: 18px;">
@@ -118,6 +118,10 @@ const handleNext = () => {
     usernameField.value?.setCustomValidity('')
     usernameField.value?.reportValidity()
     router.push('/login/password')
+}
+
+const handleBack = () => {
+    router.push('/login')
 }
 
 const handleLogin = async () => {
