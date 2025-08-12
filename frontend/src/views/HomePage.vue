@@ -45,7 +45,7 @@
 
         <!-- 内容 -->
         <OverlayScrollbarsComponent :options="options"
-          style=" height:calc(100vh - 160px); width: 100%;margin-bottom: 0px">
+          style=" height:calc(100vh - 168px); width: 100%;margin-bottom: 0px">
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
             <h1>{{ currentAssignment.title }}</h1>
             <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
@@ -54,11 +54,12 @@
           </div>
         </OverlayScrollbarsComponent>
         <div style="
-          flex: 1;
           display: flex;
           justify-content: flex-end;
           align-items: flex-end;
-          padding: 0 16px 16px 0;
+          padding-right: 16px;
+          padding-bottom: 16px;
+          padding-top: 8px;
         ">
           <mdui-button class="on-surface-variant" variant="outlined" icon="delete" style="margin-right: 8px;">
             忽略
