@@ -1,9 +1,16 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue()], server: {
+  base: './',  // 加上这个，资源路径相对化，方便Electron加载本地文件
+  plugins: [vue({
+    template: {
+      compilerOptions: {
+        isCustomElement: tag => tag.startsWith('mdui-')
+      }
+    }
+  })],
+  server: {
     proxy: {
       '/api': {
         target: 'http://localhost:8000',

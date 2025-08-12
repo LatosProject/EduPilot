@@ -35,7 +35,15 @@ async def lifespan(app: FastAPI):
     await DatabaseConnector.engine.dispose()  # 清理资源
 
 
-app = FastAPI(title="EduPilot", version="0.1a", reload=True, lifespan=lifespan)
+app = FastAPI(
+    title="EduPilot",
+    version="0.1a",
+    reload=True,
+    lifespan=lifespan,
+    docs_url=None,  # 关闭 Swagger UI
+    redoc_url=None,  # 关闭 ReDoc
+    openapi_url=None,  # 关闭 OpenAPI JSON 接口（连接口也关闭）
+)
 # 注册路由
 app.include_router(auth.router, prefix="/api/v1", tags=["Auth"])
 app.include_router(users.router, prefix="/api/v1", tags=["Users"])
@@ -75,7 +83,4 @@ if __name__ == "__main__":
         server_header=False,
         log_level=os.getenv("LOG_LEVEL", "info").lower(),
         reload_excludes=["**/logs/*", "**/*.log"],
-        docs_url=None,  # 关闭 Swagger UI
-        redoc_url=None,  # 关闭 ReDoc
-        openapi_url=None,  # 关闭 OpenAPI JSON 接口（连接口也关闭）
     )

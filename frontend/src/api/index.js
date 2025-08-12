@@ -22,7 +22,6 @@ instance.interceptors.response.use(
   async error => {
     if (error.response) {
       const status = error.response.status
-      console.log("test: %d", status)
       if (status === 401) {
         try {
           refreshToken()

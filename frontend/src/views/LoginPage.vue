@@ -55,7 +55,7 @@
                 <!-- 密码输入框 -->
                 <form @submit.prevent="handleLogin" class="slide-form"
                     :class="{ 'slide-in-right': step === 2, 'slide-out-right': step === 1 }"
-                    style="position: absolute; width: 100%;">
+                    style="position: absolute; width: 100%; ">
                     <mdui-text-field ref="passwordField" style="margin-top: 12px;" v-model="password" variant="outlined"
                         @input="onPasswordInput" label="密码" type="password" toggle-password />
                 </form>
@@ -83,7 +83,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { login } from '../api/auth'
 import 'mdui/components/text-field.js'
@@ -126,6 +126,7 @@ const handleLogin = async () => {
     if (!password.value) {
         passwordField.value?.setCustomValidity('密码不能为空')
         passwordField.value?.reportValidity()
+        isLoading.value = false;
         return
     }
     passwordField.value?.setCustomValidity('')
@@ -155,13 +156,19 @@ const handleRegister = () => {
     alert('此网站暂未开放，请联系网络管理员。')
 }
 
-watch(step, (newStep) => {
+watch(step, async (newStep) => {
     if (newStep === 2 && !username.value) {
         router.replace('/login')
     }
+    if (newStep === 2) {
+        await nextTick()
+        setTimeout(() => {
+            passwordField.value?.focus()
+        }, 450)
+    }
 })
 
-onMounted(() => {
+onMounted(async () => {
     if (step.value === 2 && !username.value) {
         router.replace('/login')
     }

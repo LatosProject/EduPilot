@@ -2,7 +2,7 @@
 
 // 从 Vue Router 导入创建路由的方法
 
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 import HomePage from '../views/HomePage.vue'
 import LoginPage from '../views/LoginPage.vue'
@@ -66,8 +66,8 @@ const routes = [
 
 // 创建路由实例
 const router = createRouter({
-  history: createWebHistory(), // 使用 HTML5 history 模式
-  routes // 路由表
+  history: createWebHashHistory(), // 改为 hash 模式
+  routes
 })
 
 // 全局前置守卫
