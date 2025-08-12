@@ -4,7 +4,7 @@
     <!-- 左侧导航栏 -->
     <NavigationRail />
     <!-- 右侧内容区域 -->
-    <div style="flex-grow: 1; display: flex; padding-left: 8px; padding-top: 24px;">
+    <div style="flex-grow: 1; display: flex; padding-left: 8px; padding-top: 24px;padding-bottom: 24px;">
       <!-- 左侧固定宽度区域 -->
       <div style="width: 480px; min-width: 480px;">
         <!-- 顶部搜索卡片 -->
@@ -45,11 +45,11 @@
 
         <!-- 内容 -->
         <OverlayScrollbarsComponent :options="options"
-          style=" height:calc(100vh - 144px); width: 100%;margin-bottom: 8px">
+          style=" height:calc(100vh - 160px); width: 100%;margin-bottom: 0px">
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
             <h1>{{ currentAssignment.title }}</h1>
             <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
-            }}</small></h3>
+                }}</small></h3>
             <p>{{ currentAssignment.content }}</p>
           </div>
         </OverlayScrollbarsComponent>

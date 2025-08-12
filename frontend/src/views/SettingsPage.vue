@@ -12,6 +12,7 @@
           background-color: rgb(var(--mdui-color-surface-container-lowest));
           box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.20);
           border-radius: var(--mdui-shape-corner-extra-large);
+          margin-bottom: 24px;
         ">
       <div style="margin-left: 48px">
         <div class="mdui-prose" style="margin-top: 48px;">
