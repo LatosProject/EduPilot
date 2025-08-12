@@ -1,18 +1,16 @@
 # app.py
-from contextlib import asynccontextmanager
 import os
-from fastapi import FastAPI
-from api.v1 import users
-from api.v1 import auth
-from api.v1 import classes
-from api.v1 import health
-from core.exception_handlers import register_exception_handlers
-from core.middleware import AccessLogMiddleware
-from api.v1 import users
-from db.connector import DatabaseConnector
-from fastapi.middleware.cors import CORSMiddleware
-from core.logger import setup_logging
+from contextlib import asynccontextmanager
+
 import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from api.v1 import auth, classes, health, users
+from core.exception_handlers import register_exception_handlers
+from core.logger import setup_logging
+from core.middleware import AccessLogMiddleware
+from db.connector import DatabaseConnector
 
 logo = r"""
 $$$$$$$$\      $$\           $$$$$$$\  $$\ $$\            $$\     
@@ -77,4 +75,7 @@ if __name__ == "__main__":
         server_header=False,
         log_level=os.getenv("LOG_LEVEL", "info").lower(),
         reload_excludes=["**/logs/*", "**/*.log"],
+        docs_url=None,  # 关闭 Swagger UI
+        redoc_url=None,  # 关闭 ReDoc
+        openapi_url=None,  # 关闭 OpenAPI JSON 接口（连接口也关闭）
     )
