@@ -10,9 +10,8 @@
         <!-- 顶部搜索卡片 -->
         <SearchCard />
         <!-- 搜索框下方按钮组，绑定筛选事件 -->
-        <TaskButtonGroup @status-change="onStatusChange" />
-        <OverlayScrollbarsComponent :options="options"
-          style=" height:calc(100vh - 144px); width: 100%;margin-top: 16px">
+        <TaskButtonGroup style="margin-bottom: 16px" @status-change="onStatusChange" />
+        <OverlayScrollbarsComponent :options="options" style=" height:calc(100vh - 144px); width: 100%;">
           <div style="margin-left: 4px;margin-right: 4px ;margin-top: 4px">
             <AssignmentCard style="margin-bottom: 16px;" v-for="assignment in assignments" :key="assignment.uuid"
               :title="assignment.title" @click="goDetail(assignment.uuid)"
@@ -49,7 +48,7 @@
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
             <h1>{{ currentAssignment.title }}</h1>
             <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
-                }}</small></h3>
+            }}</small></h3>
             <p>{{ currentAssignment.content }}</p>
           </div>
         </OverlayScrollbarsComponent>
