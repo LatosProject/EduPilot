@@ -70,7 +70,8 @@
         ">
                 <mdui-button type="button"
                     style="color: rgb(var(--mdui-color-primary-light)); background-color: transparent;"
-                    @click="step === 1 ? handleRegister() : handleBack()"> {{ step === 1 ? '注册账号' : '返回' }}</mdui-button>
+                    @click="step === 1 ? handleRegister() : handleBack()"> {{ step === 1 ? '注册账号' : '返回'
+                    }}</mdui-button>
             </div>
 
             <div style="position: absolute; right: 18px; bottom: 18px;">
@@ -124,8 +125,13 @@ const handleBack = () => {
     router.push('/login')
 }
 
+let lastClickTime = 0
 const handleLogin = async () => {
-    isLoading.value = true; // 显示进度条
+    const now = Date.now()
+    if (now - lastClickTime < 1000) return
+    lastClickTime = now
+    if (isLoading.value) return   // 正在处理就直接返回
+    isLoading.value = true;
     error.value = ''
     if (!password.value) {
         passwordField.value?.setCustomValidity('密码不能为空')
