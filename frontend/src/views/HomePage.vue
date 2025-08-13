@@ -53,7 +53,7 @@
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
             <h1>{{ currentAssignment.title }}</h1>
             <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
-                }}</small></h3>
+            }}</small></h3>
             <p>{{ currentAssignment.content }}</p>
           </div>
         </OverlayScrollbarsComponent>
@@ -91,6 +91,7 @@ import { formatDeadline } from '../utils/date'
 import { setTheme } from 'mdui/functions/setTheme.js';
 import { getTheme } from 'mdui/functions/getTheme.js';
 import { useGlobalStore } from '../stores/global'
+import { getAssignments } from '../api/assignment'
 const globalStore = useGlobalStore()
 
 globalStore.setClassUuid("e0453e99-a7e4-43fa-a480-5272add34867")

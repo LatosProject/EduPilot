@@ -4,8 +4,8 @@
     <mdui-fab class="fab-purple" lowered icon="edit--rounded" slot="top"></mdui-fab>
     <mdui-navigation-rail-item v-for="item in navItems" :key="item.path" class="label-medium secondary"
       :icon="item.icon" :value="item.value" @click="go(item)">
-      <mdui-badge v-if="item.path === '/' && homeBadge > 0" slot="badge">
-        {{ homeBadge > 99 ? '99+' : homeBadge }}
+      <mdui-badge v-if="item.path === '/' && globalStore.homeBadge > 0" slot="badge">
+        {{ globalStore.homeBadge > 99 ? '99+' : globalStore.homeBadge }}
       </mdui-badge>
       {{ item.label }}
     </mdui-navigation-rail-item>
