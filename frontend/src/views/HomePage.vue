@@ -90,9 +90,12 @@ import 'overlayscrollbars/styles/overlayscrollbars.css'
 import { formatDeadline } from '../utils/date'
 import { setTheme } from 'mdui/functions/setTheme.js';
 import { getTheme } from 'mdui/functions/getTheme.js';
-const classUuid = 'e0453e99-a7e4-43fa-a480-5272add34867'
+import { useGlobalStore } from '../stores/global'
+const globalStore = useGlobalStore()
 
-const { assignments, selectedId, currentStatus, currentAssignment, fetchAssignments } = useAssignments(classUuid)
+globalStore.setClassUuid("e0453e99-a7e4-43fa-a480-5272add34867")
+
+const { assignments, selectedId, currentStatus, currentAssignment, fetchAssignments } = useAssignments(globalStore.classUuid)
 
 const route = useRoute()
 const router = useRouter()
@@ -142,7 +145,9 @@ onMounted(() => {
 
   osInstance.elements().viewport.addEventListener('scroll', onScroll)
   fetchAssignments(currentStatus.value)
-  intervalId = setInterval(() => {
+  intervalId = setInterval(async () => {
+    const res = await getAssignments(globalStore.classUuid, 1, 10, 'created_at', 'asc', 'pending')
+    globalStore.setBadgeCount(res.pagination.total)
     fetchAssignments(currentStatus.value)
   }, 60000)
 })

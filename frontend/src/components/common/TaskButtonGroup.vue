@@ -20,10 +20,10 @@ import { reactive, defineEmits } from 'vue';
 const emit = defineEmits(['status-change']);
 
 const buttons = reactive([
-  { label: '总作业', status: '', selected: true },
-  { label: '待完成', status: 'pending', selected: false },
+  { label: '待完成', status: 'pending', selected: true },
   { label: '已完成', status: 'done', selected: false },
   { label: '已过期', status: 'expired', selected: false },
+  { label: '总作业', status: '', selected: false },
 ]);
 
 function selectButton(index) {

@@ -9,6 +9,8 @@ import LoginPage from '../views/LoginPage.vue'
 import SettingsPage from '../views/SettingsPage.vue'
 import StudyPage from '../views/StudyPage.vue'
 import { authGuard } from './guards'
+import { getAssignments } from '../api/assignment'
+import { useGlobalStore } from '../stores/global'
 
 // 导入自定义路由守卫（authGuard 用来做登录权限校验）
 
@@ -74,5 +76,16 @@ const router = createRouter({
 // 每次路由跳转前都会执行 authGuard（用来检查用户是否已登录）
 router.beforeEach(authGuard)
 
+
+router.beforeResolve(async (to, from, next) => {
+  const globalStore = useGlobalStore()
+  // 如果没登录或不需要认证的页面，直接放行
+  if (!to.meta.requiresAuth || !globalStore.classUuid || to.path === '/') {
+    return next()
+  }
+  const res = await getAssignments(globalStore.classUuid, 1, 10, 'created_at', 'asc', 'pending')
+  globalStore.setBadgeCount(res.pagination.total)
+  next()
+})
 // 导出路由实例，供 main.js 挂载到应用
 export default router

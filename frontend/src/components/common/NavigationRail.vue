@@ -4,6 +4,9 @@
     <mdui-fab class="fab-purple" lowered icon="edit--rounded" slot="top"></mdui-fab>
     <mdui-navigation-rail-item v-for="item in navItems" :key="item.path" class="label-medium secondary"
       :icon="item.icon" :value="item.value" @click="go(item)">
+      <mdui-badge v-if="item.path === '/' && homeBadge > 0" slot="badge">
+        {{ homeBadge > 99 ? '99+' : homeBadge }}
+      </mdui-badge>
       {{ item.label }}
     </mdui-navigation-rail-item>
   </mdui-navigation-rail>
@@ -13,10 +16,12 @@
 import { useRouter, useRoute } from 'vue-router'
 
 import { onMounted, watch, ref } from 'vue'
-
+import { useGlobalStore } from '/src/stores/global.js'
 const router = useRouter()
 const route = useRoute()
 const railRef = ref(null)
+const globalStore = useGlobalStore()
+const homeBadge = globalStore.homeBadge
 
 const navItems = [
   { label: '主页', path: '/', icon: 'inbox--rounded', value: 'home' },

@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { getAssignments } from '../api/assignment'
+import { useGlobalStore } from "/src/stores/global";
 
 /**
  * 自定义组合式函数，管理作业相关状态和逻辑
@@ -11,18 +12,19 @@ import { getAssignments } from '../api/assignment'
  * @returns 作业列表及相关状态、方法
  */
 export function useAssignments(classUuid) {
+    const globalStore = useGlobalStore();
     const route = useRoute()    // 获取当前路由对象，响应路由变化
     const router = useRouter()  // 获取路由实例，用于导航跳转
     const assignments = ref([]) // 存储作业列表，响应式数据
     const selectedId = ref(null) // 当前选中的作业 UUID
-    const currentStatus = ref('') // 当前作业筛选状态，空字符串代表全部
+    const currentStatus = ref() // 当前作业筛选状态，空字符串代表全部
 
     // 计算属性，获取当前选中的作业详情对象
     const currentAssignment = computed(() =>
         assignments.value.find(a => a.uuid === selectedId.value)
     )
 
-    async function fetchAssignments(status = '') {
+    async function fetchAssignments(status = 'pending') {
         try {
             const res = await getAssignments(classUuid, 1, 10, 'created_at', 'asc', status);
             assignments.value = res.items;
