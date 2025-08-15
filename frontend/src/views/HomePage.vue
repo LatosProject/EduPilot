@@ -16,14 +16,25 @@
           <div class="top-shadow" v-show="showTopShadow"></div>
           <OverlayScrollbarsComponent ref="scrollbarRef" :options="options"
             style=" height:calc(100vh - 144px); width: 100%;">
-            <div style="margin-left: 4px;margin-right: 4px ;margin-top: 4px">
-              <AssignmentCard style="margin-bottom: 16px;" v-for="assignment in assignments" :key="assignment.uuid"
-                :title="assignment.title" @click="goDetail(assignment.uuid)"
-                :deadline="formatDeadline(assignment.deadline)" :description="assignment.description"
-                :selected="assignment.uuid !== selectedId" />
+            <!-- 在内部根据 assignments.length > 0 来决定显示列表或“尚无作业” -->
+            <div v-if="assignments.length > 0">
+              <div style="margin-left: 4px;margin-right: 4px ;margin-top: 4px">
+                <AssignmentCard style="margin-bottom: 16px;" v-for="assignment in assignments" :key="assignment.uuid"
+                  :title="assignment.title" @click="goDetail(assignment.uuid)"
+                  :deadline="formatDeadline(assignment.deadline)" :description="assignment.description"
+                  :selected="assignment.uuid !== selectedId" />
+              </div>
+            </div>
+            <div v-else style="height: calc(100vh - 176px); display: flex; align-items: center; justify-content: center;
+              font-family: 'Noto Sans SC';
+              font-weight: var(--mdui-typescale-headline-small-weight);
+              font-size: var(--mdui-typescale-headline-small-size);
+              line-height: var(--mdui-typescale-headline-small-line-height);
+              letter-spacing: var(--mdui-typescale-headline-small-tracking);
+              color: var(--mdui-color-on-surface-variant);">
+              尚无作业
             </div>
           </OverlayScrollbarsComponent>
-
         </div>
       </div>
 
@@ -46,7 +57,10 @@
               @click="toggleTheme"></mdui-button-icon>
           </div>
         </div>
-
+        <div v-if="!currentAssignment"
+          style="height: calc(100vh - 168px); display: flex; align-items: center; justify-content: center;">
+          <LottieAnimation :animation-data="animationData" :loop="true" :autoplay="true" :width="250" :height="250" />
+        </div>
         <!-- 内容 -->
         <OverlayScrollbarsComponent :options="options" v-if="currentAssignment"
           style=" height:calc(100vh - 168px); width: 100%;margin-bottom: 0px">
@@ -93,6 +107,7 @@ import { getTheme } from 'mdui/functions/getTheme.js';
 import { useGlobalStore } from '../stores/global'
 import { getAssignments } from '../api/assignment'
 import { getClass } from '../api/classes'
+import animationData from "../assets/empty.json";
 const globalStore = useGlobalStore()
 const { assignments, selectedId, currentStatus, currentAssignment, fetchAssignments } = useAssignments(globalStore.classUuids)
 
