@@ -5,17 +5,18 @@ import { ref } from 'vue'
 
 export const useGlobalStore = defineStore('global', () => {
     const homeBadge = ref(Number(localStorage.getItem('homeBadge') || 0))
-    const classUuid = ref(localStorage.getItem('classUuid') || '')
+    const classUuids = ref((localStorage.getItem('classUuids') || '').split(',').filter(Boolean))
 
     function setBadgeCount(count) {
         homeBadge.value = count
         localStorage.setItem('homeBadge', count)
     }
 
-    function setClassUuid(uuid) {
-        classUuid.value = uuid
-        localStorage.setItem('classUuid', uuid)
+    function setClassUuids(uuids) {
+        classUuids.value = uuids
+        localStorage.setItem('classUuids', uuids)
     }
 
-    return { homeBadge, classUuid, setBadgeCount, setClassUuid }
+
+    return { homeBadge, classUuids, setBadgeCount, setClassUuids }
 })

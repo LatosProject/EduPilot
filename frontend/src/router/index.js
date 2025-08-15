@@ -79,12 +79,23 @@ router.beforeEach(authGuard)
 
 router.beforeResolve(async (to, from, next) => {
   const globalStore = useGlobalStore()
+
   // 如果没登录或不需要认证的页面，直接放行
-  if (!to.meta.requiresAuth || !globalStore.classUuid || to.path === '/') {
+  if (!to.meta.requiresAuth || !globalStore.classUuids.length || to.path === '/') {
     return next()
   }
-  const res = await getAssignments(globalStore.classUuid, 1, 10, 'created_at', 'asc', 'pending')
-  globalStore.setBadgeCount(res.pagination.total)
+
+  try {
+    let totalBadge = 0
+    for (const cls of globalStore.classUuids) {
+      const res = await getAssignments(cls, 1, 10, 'created_at', 'asc', 'pending')
+      totalBadge += res.pagination?.total || 0
+    }
+    globalStore.setBadgeCount(totalBadge)
+  } catch (e) {
+    console.error('刷新徽章失败', e)
+  }
+
   next()
 })
 // 导出路由实例，供 main.js 挂载到应用

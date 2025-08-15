@@ -31,6 +31,7 @@ from services.classes import (
     get_assignment,
     get_assignments,
     get_class,
+    get_classes,
     join_class,
     update_class,
 )
@@ -345,5 +346,34 @@ async def get_class_route(
 
 
 # TO-DO
-async def get_classes_route():
-    pass
+@router.get("", response_model=Union[ApiResponse, ErrorResponse])
+async def get_classes_route(
+    page: int = 1,
+    size: int = 10,
+    status: str = None,
+    search: str = None,
+    order_by: str = "created_at",
+    order: str = "desc",
+    db: AsyncSession = Depends(
+        DatabaseConnector.get_db,
+    ),
+    current_user: User = Depends(get_current_user),
+):
+    items, total = await get_classes(
+        db,
+        current_user.uuid,
+        page,
+        size,
+        status,
+        search,
+        order_by,
+        order,
+        current_user.role,
+    )
+    pages = (total + size - 1) // size
+    return to_response(
+        data=PageData(
+            items=[ClassData.model_validate(item) for item in items],
+            pagination=Pagination(page=page, size=size, total=total, pages=pages),
+        )
+    )

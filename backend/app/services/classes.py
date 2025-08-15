@@ -1,17 +1,18 @@
-from datetime import datetime, timezone
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import asc, desc, func, or_, select
-from sqlalchemy.exc import IntegrityError
+
 from fastapi import logger
+from sqlalchemy import and_, asc, desc, func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.user import User
-from schemas.Response import ClassUserData
+
 from core import exceptions
 from models.class_model import AssignmentModel, ClassMemberModel, ClassModel
+from models.user import User
+from schemas.Response import ClassUserData
 from utils import random
-
 
 logger = logging.getLogger("services.classes")
 
@@ -236,35 +237,49 @@ async def get_assignment(
     return assignment
 
 
-async def get_class_member_by_uuid(db: AsyncSession, class_uuid: str, user_uuid: str):
+async def get_class_member_by_uuid(
+    db: AsyncSession, class_uuid: str | None = None, user_uuid: str | None = None
+):
     """
-    根据班级 UUID 和用户 UUID 查询班级成员信息，验证该用户是否属于该班级。
+    根据班级 UUID 和用户 UUID 查询班级成员信息。
+
+    用途：
+        - 验证某个用户是否属于某个班级
+        - 查询某个班级的所有成员
+        - 查询某个用户所在的所有班级
 
     参数:
-        db (AsyncSession): 异步数据库会话。
-        class_uuid (str): 班级唯一标识符。
-        user_uuid (str): 用户唯一标识符。
+        db (AsyncSession): 异步数据库会话，用于执行 SQL 查询
+        class_uuid (str | None): 班级唯一标识符，可选
+        user_uuid (str | None): 用户唯一标识符，可选
 
     返回:
-        ClassMemberModel 实例，若找到对应成员。
+        list[ClassMemberModel]: 查询到的班级成员对象列表（至少有一条记录）
 
     异常:
-        DatabaseQueryError: 查询数据库时出现异常。
-        InvalidParameter: 未找到对应班级成员，表示用户不属于该班级。
+        InvalidParameter: 当两个参数都未传入，或未查到任何成员时抛出
+        DatabaseQueryError: 当执行数据库查询时发生异常抛出
     """
     try:
-        stmt = select(ClassMemberModel).where(
-            ClassMemberModel.user_uuid == user_uuid,
-            ClassMemberModel.class_uuid == class_uuid,  # 限定只查本班级的作业
-        )
+        conditions = []
+        if user_uuid:
+            conditions.append(ClassMemberModel.user_uuid == user_uuid)
+        if class_uuid:
+            conditions.append(ClassMemberModel.class_uuid == class_uuid)
+
+        stmt = select(ClassMemberModel)
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
         result = await db.execute(stmt)
-        assignment = result.scalar_one_or_none()
+        members = result.scalars().all()
     except Exception as e:
         logger.error("查询班级成员失败: %s，错误: %s", user_uuid, e)
         raise exceptions.DatabaseQueryError("查询班级成员失败") from e
 
-    if assignment is None:
+    if not members:
         raise exceptions.InvalidParameter()
+
+    return members
 
 
 async def get_class_by_invite_code(db: AsyncSession, invite_code: str):
@@ -626,3 +641,65 @@ async def get_class(db: AsyncSession, class_uuid: str, user_role: str):
     if class_obj is None:
         raise exceptions.NotExists()
     return class_obj
+
+
+async def get_classes(
+    db: AsyncSession,
+    user_uuid: int,
+    page: int,
+    size: int,
+    status: str,
+    search: str,
+    order_by: str,
+    order: str,
+    user_role: str,
+):
+    stmt = select(ClassModel)
+    if user_role != "admin":
+        class_member_list = await get_class_member_by_uuid(db, user_uuid=user_uuid)
+        if not class_member_list:
+            raise exceptions.InvalidParameter()
+        class_uuids = [member.class_uuid for member in class_member_list]
+        stmt = stmt.where(ClassModel.class_uuid.in_(class_uuids))
+    # 偏移量
+    offset = (page - 1) * size
+    if status:
+        stmt = stmt.where(ClassModel.status == status)
+    if search:
+        stmt = stmt.where(
+            or_(
+                ClassModel.class_uuid.ilike(f"%{search}%"),
+                ClassModel.class_name.ilike(f"%{search}%"),
+                ClassModel.teacher_uuid.ilike(f"%{search}%"),
+                ClassModel.invite_code.ilike(f"%{search}%"),
+            )
+        )
+    # 排序字段和方向
+    order_column = getattr(ClassModel, order_by, None)
+    if order_column is not None:
+        stmt = stmt.order_by(
+            desc(order_column) if order == "desc" else asc(order_column)
+        )
+
+    # 分页
+    stmt = stmt.offset(offset).limit(size)
+    # 查询数据
+    result = await db.execute(stmt)
+    items = result.scalars().all()
+    # 总数查询（用于分页）
+    count_stmt = select(func.count()).select_from(ClassModel)
+    if user_role != "admin":
+        count_stmt = count_stmt.where(ClassModel.class_uuid.in_(class_uuids))
+    if status:
+        count_stmt = count_stmt.where(ClassModel.status == status)
+    if search:
+        count_stmt = count_stmt.where(
+            or_(
+                ClassModel.class_uuid.ilike(f"%{search}%"),
+                ClassModel.class_name.ilike(f"%{search}%"),
+                ClassModel.teacher_uuid.ilike(f"%{search}%"),
+                ClassModel.invite_code.ilike(f"%{search}%"),
+            )
+        )
+    total = (await db.execute(count_stmt)).scalar_one()
+    return items, total

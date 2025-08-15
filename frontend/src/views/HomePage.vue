@@ -40,24 +40,24 @@
         <div style="display: flex; align-items: center;height:56px">
 
           <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
-            <mdui-button-icon icon="share--outlined"></mdui-button-icon>
-            <mdui-button-icon icon="question_answer--outlined"></mdui-button-icon>
+            <mdui-button-icon v-if="currentAssignment" icon="share--outlined"></mdui-button-icon>
+            <mdui-button-icon v-if="currentAssignment" icon="question_answer--outlined"></mdui-button-icon>
             <mdui-button-icon style="margin-right:16px" icon="dark_mode--outlined"
               @click="toggleTheme"></mdui-button-icon>
           </div>
         </div>
 
         <!-- 内容 -->
-        <OverlayScrollbarsComponent :options="options"
+        <OverlayScrollbarsComponent :options="options" v-if="currentAssignment"
           style=" height:calc(100vh - 168px); width: 100%;margin-bottom: 0px">
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
             <h1>{{ currentAssignment.title }}</h1>
             <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
-            }}</small></h3>
+                }}</small></h3>
             <p>{{ currentAssignment.content }}</p>
           </div>
         </OverlayScrollbarsComponent>
-        <div style="
+        <div v-if="currentAssignment" style="
           display: flex;
           justify-content: flex-end;
           align-items: flex-end;
@@ -92,11 +92,9 @@ import { setTheme } from 'mdui/functions/setTheme.js';
 import { getTheme } from 'mdui/functions/getTheme.js';
 import { useGlobalStore } from '../stores/global'
 import { getAssignments } from '../api/assignment'
+import { getClass } from '../api/classes'
 const globalStore = useGlobalStore()
-
-globalStore.setClassUuid("e0453e99-a7e4-43fa-a480-5272add34867")
-
-const { assignments, selectedId, currentStatus, currentAssignment, fetchAssignments } = useAssignments(globalStore.classUuid)
+const { assignments, selectedId, currentStatus, currentAssignment, fetchAssignments } = useAssignments(globalStore.classUuids)
 
 const route = useRoute()
 const router = useRouter()
@@ -140,17 +138,41 @@ function onStatusChange(status) {
 }
 
 let intervalId = null
-onMounted(() => {
+onMounted(async () => {
+  const res = await getClass()
+  const classList = res.items?.map(i => i.class_uuid).filter(Boolean) ?? []
+  globalStore.setClassUuids(classList)
+  // if (items.length > 0) {
+  //   console.log(items)
+  //   const classUuid = items[0].class_uuid
+  //   globalStore.setClassUuid(classUuid)
+  // } else {
+  //   return
+  // }
+
+
   const osInstance = scrollbarRef.value?.osInstance()
   if (!osInstance) return
 
   osInstance.elements().viewport.addEventListener('scroll', onScroll)
   fetchAssignments(currentStatus.value)
   intervalId = setInterval(async () => {
-    const res = await getAssignments(globalStore.classUuid, 1, 10, 'created_at', 'asc', 'pending')
-    globalStore.setBadgeCount(res.pagination.total)
-    fetchAssignments(currentStatus.value)
+    try {
+      let totalBadge = 0
+      for (const cls of globalStore.classUuids) {
+        const res = await getAssignments(cls, 1, 10, 'created_at', 'asc', 'pending')
+        totalBadge += res.pagination?.total || 0
+      }
+      console.log('totalBadge', totalBadge)  // <--- 打印检查
+      globalStore.setBadgeCount(totalBadge)
+
+      // 刷新作业列表
+      fetchAssignments(currentStatus.value)
+    } catch (e) {
+      console.error('刷新作业失败', e)
+    }
   }, 60000)
+
 })
 
 onBeforeUnmount(() => {
