@@ -18,34 +18,32 @@ function goHome(next) {
     return next({ name: 'Home' })
 }
 
-/**
- * 全局路由守卫（authGuard）
- * 每次路由跳转前执行，用于校验用户是否登录和 token 是否有效
- */
 export async function authGuard(to, from, next) {
     const token = getAccessToken()
 
-    // 无 token 需要权限页面，且不是登录页才跳登录页
-    if (!token && to.meta.requiresAuth && to.name !== 'Login') return goLogin(next)
+    // 登录页不需要验证 token，直接放行
+    if (to.name === 'Login') return next()
 
-    if (!token) return next()
+    // 没有 token，直接跳登录页
+    if (!token) return next({ name: 'Login' })
 
-    const result = await verifyToken()
-    const status = result.status
+    try {
+        const { status } = await verifyToken()
 
-    if (status === 1002) {
-        const result = await refreshToken()
-        const refreshed = result.access_token
-        return refreshed ? goHome(next) : (to.name !== 'Login' ? goLogin(next) : next())
+        if (status === 1002) { // token 过期
+            const refresh = await refreshToken()
+            if (refresh?.access_token) return next()  // 刷新成功
+            // 刷新失败，直接去登录页，注意不要再尝试刷新
+            return next({ name: 'Login' })
+        }
+
+        if (status === 0) return next() // token 有效，放行
+
+        // 其他情况，直接跳登录页
+        return next({ name: 'Login' })
+
+    } catch (err) {
+        // 网络或异常，也直接跳登录页
+        return next({ name: 'Login' })
     }
-
-    if (status === 0) {
-        // 已登录访问登录页，跳首页
-        return to.name === 'Login' ? goHome(next) : next()
-    }
-
-    // 其他情况兜底，且不是登录页才跳登录页
-    if (to.name !== 'Login') return goLogin(next)
-
-    next()
 }
