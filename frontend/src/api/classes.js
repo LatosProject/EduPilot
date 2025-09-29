@@ -8,3 +8,7 @@ export async function getClass(page = 1, size = 25, search = undefined) {
         pagination: res.data.data.pagination,
     }
 }
+
+export function joinClass(inviteCode) {
+  return request.post('/api/v1/classes/students', { invite_code: inviteCode })
+}

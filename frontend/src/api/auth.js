@@ -1,5 +1,8 @@
 // api/auth.js
-import request from './index'  // axios 实例，统一配置请求基础路径、拦截器等
+
+import request from './index'
+
+// axios 实例，统一配置请求基础路径、拦截器等
 
 // 登录接口，传入用户名和密码，返回 Promise
 export function login(username, password) {
@@ -15,6 +18,7 @@ export function getAccessToken() {
 export function getProfile() {
   return request.get('/api/v1/auth/profile')
 }
+
 
 // 刷新 token，调用后端刷新接口，返回新的 access_token 和过期时间
 export async function refreshToken() {

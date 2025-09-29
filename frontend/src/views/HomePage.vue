@@ -92,6 +92,7 @@
 </template>
 
 <script setup>
+
 import NavigationRail from '../components/common/NavigationRail.vue'
 import SearchCard from '../components/common/SearchCard.vue'
 import TaskButtonGroup from '../components/common/TaskButtonGroup.vue'
@@ -110,7 +111,6 @@ import { getClass } from '../api/classes'
 import animationData from "../assets/empty.json";
 const globalStore = useGlobalStore()
 const { assignments, selectedId, currentStatus, currentAssignment, fetchAssignments } = useAssignments(globalStore.classUuids)
-
 const route = useRoute()
 const router = useRouter()
 const showTopShadow = ref(false)
@@ -154,9 +154,20 @@ function onStatusChange(status) {
 
 let intervalId = null
 onMounted(async () => {
-  const res = await getClass()
-  const classList = res.items?.map(i => i.class_uuid).filter(Boolean) ?? []
-  globalStore.setClassUuids(classList)
+let res = null
+try {
+  res = await getClass()
+} catch(e) {
+  console.error('getClass failed', e)
+}
+const classList = res?.items?.map(i => i.class_uuid).filter(Boolean) ?? []
+globalStore.setClassUuids(classList)
+// 安全判断长度
+if (!globalStore.classUuids.length) {
+  // 数组为空，跳转到 Invite 页面
+  router.push({ name: 'Invite' })
+  return
+}
   // if (items.length > 0) {
   //   console.log(items)
   //   const classUuid = items[0].class_uuid
@@ -189,7 +200,6 @@ onMounted(async () => {
   }, 60000)
 
 })
-
 onBeforeUnmount(() => {
   const osInstance = scrollbarRef.value?.osInstance()
   if (!osInstance) return
