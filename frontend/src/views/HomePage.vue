@@ -2,9 +2,17 @@
   <!-- 页面整体横向布局 -->
   <div style="display: flex; height: 100vh;">
     <!-- 左侧导航栏 -->
-    <NavigationRail />
+    <NavigationRail @menu-click="onMenuClick" />
     <!-- 右侧内容区域 -->
-    <div style="flex-grow: 1; display: flex; padding-left: 8px; padding-top: 24px;padding-bottom: 24px;">
+
+<div :style="{
+      flexGrow: 1,
+      display: 'flex',
+      paddingLeft: contentPaddingLeft + 'px',
+      paddingTop: '24px',
+      paddingBottom: '24px',
+      transition: isInitial ? 'none' : 'padding-left 0.3s'
+    }">
       <!-- 左侧固定宽度区域 -->
       <div style="width: 480px; min-width: 480px;">
         <!-- 顶部搜索卡片 -->
@@ -115,12 +123,32 @@ const route = useRoute()
 const router = useRouter()
 const showTopShadow = ref(false)
 const scrollbarRef = ref(null)
+const isInitial = ref(true)
+
 const options = ref({
   scrollbars: {
     autoHide: 'leave',
     autoHideDelay: 500,
   },
 })
+
+const toggle = ref(localStorage.getItem("navToggle") === "1") // true/false
+const contentPaddingLeft = ref(toggle.value ? 48 : 8)
+
+
+function onMenuClick() {
+  toggle.value = !toggle.value
+  localStorage.setItem("navToggle", toggle.value ? "1" : "0")
+  contentPaddingLeft.value = toggle.value ? 48 : 8
+}
+
+// 页面挂载后允许动画
+onMounted(() => {
+  isInitial.value = false
+})
+
+
+
 function toggleTheme() {
   let theme = getTheme();
   if (theme === 'auto') {
@@ -154,6 +182,7 @@ function onStatusChange(status) {
 
 let intervalId = null
 onMounted(async () => {
+    isInitial.value = false
 let res = null
 try {
   res = await getClass()
