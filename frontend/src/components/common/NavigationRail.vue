@@ -31,7 +31,7 @@
       :key="item.path"
       :class="[
         'label-medium secondary',
-        { 'custom-toggle-style': toggle, 'toggle-active': toggle },
+        { 'custom-toggle-style': toggle, 'toggle-active': toggle,'.custom-toggle-style':toggle },
       ]"
       :icon="item.icon"
       :value="item.value"
@@ -174,9 +174,10 @@ function saveToggle() {
   left: 48px;
 }
 
-::v-deep(mdui-navigation-rail-item) {
+::v-deep(.custom-toggle-style) {
   --mdui-comp-ripple-state-layer-color: transparent !important;
 }
+
 
 ::v-deep(.custom-toggle-style .label-wrapper) {
   position: absolute;
