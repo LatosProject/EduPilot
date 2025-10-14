@@ -9,16 +9,41 @@
       flexGrow: 1,
       display: 'flex',
       paddingLeft: contentPaddingLeft + 'px',
-      paddingTop: '24px',
+      paddingTop: '22px',
       paddingBottom: '24px',
       transition: isInitial ? 'none' : 'padding-left 0.3s'
     }">
       <!-- 左侧固定宽度区域 -->
       <div style="width: 480px; min-width: 480px;">
-        <!-- 顶部搜索卡片 -->
-        <SearchCard />
+<div style="display: flex; align-items: center; width: 100%;">
+  <!-- 左侧文字 Logo -->
+       <!-- LOGO -->
+    <img
+      src="@/assets/logo.png"
+      alt="logo"
+      style="width: 32px; height: 32px;"
+    />
+  <span
+    style="
+      font-size: 21px;
+      font-weight: 400;
+      color: rgb(var(--mdui-color-primary));
+      margin-left: 8px;
+      margin-top: 6px;
+    "
+  >
+    EduPilot
+  </span>
+
+  <!-- 占位弹性空间，让左右分开 -->
+  <div style="flex: 1;"></div>
+
+  <!-- 右侧搜索框 -->
+  <SearchCard @search="onSearchSelect" :filter-status="currentStatus" style="position: absolute; width: 720px; margin-right: 80px; height: 48px;margin-left: 185px; margin-top: 4px;" />
+</div>
+
         <!-- 搜索框下方按钮组，绑定筛选事件 -->
-        <TaskButtonGroup style="margin-bottom: 16px" @status-change="onStatusChange" />
+        <TaskButtonGroup style="margin-bottom: 16px; margin-top:28px ;" @status-change="onStatusChange" />
         <div style="position: relative;">
           <!-- 阴影放这里，绝对定位相对这个容器 -->
           <div class="top-shadow" v-show="showTopShadow"></div>
@@ -26,11 +51,19 @@
             style=" height:calc(100vh - 144px); width: 100%;">
             <!-- 在内部根据 assignments.length > 0 来决定显示列表或“尚无作业” -->
             <div v-if="assignments.length > 0">
-              <div style="margin-left: 4px;margin-right: 4px ;margin-top: 4px">
-                <AssignmentCard style="margin-bottom: 16px;" v-for="assignment in assignments" :key="assignment.uuid"
-                  :title="assignment.title" @click="goDetail(assignment.uuid)"
-                  :deadline="formatDeadline(assignment.deadline)" :description="assignment.description"
-                  :selected="assignment.uuid !== selectedId" />
+              <div style="margin-left: 4px;margin-right: 4px ;margin-top: 4px; ">
+                <AssignmentCard style="margin-bottom: 16px"
+  v-for="assignment in assignments"
+  :key="assignment.uuid"
+  :id="`assignment-${assignment.uuid}`"
+  :title="assignment.title"
+  @click="goDetail(assignment.uuid)"
+  :deadline="formatDeadline(assignment.deadline)"
+  :description="assignment.description"
+  :selected="assignment.uuid=== selectedId"
+
+/>
+
               </div>
             </div>
             <div v-else style="height: calc(100vh - 176px); display: flex; align-items: center; justify-content: center;
@@ -46,55 +79,71 @@
         </div>
       </div>
 
-      <!-- 主体内容卡片容器 -->
-      <div style="
-        min-width: 480px;
-          flex-grow: 1;
-          margin-left: 16px;
-          margin-right: 24px;
-          background-color: rgb(var(--mdui-color-surface-container-lowest));
-          box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.20);
-          border-radius: var(--mdui-shape-corner-extra-large);
-        ">
-        <div style="display: flex; align-items: center;height:56px">
+<!-- 主体内容卡片容器 -->
+<div
+  style="
+    position: relative; /* 必须加上这行！！ */
+    min-width: 480px;
+    flex-grow: 1;
+    margin-left: 16px;
+    margin-top: 64px;
+    margin-right: 24px;
+    background-color: rgb(var(--mdui-color-surface-container-lowest));
+    box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.20);
+    border-radius: var(--mdui-shape-corner-extra-large);
+  "
+>
+  <!-- 顶部工具栏 -->
+  <div style="display: flex; align-items: center; height: 56px;">
+    <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+      <mdui-button-icon v-if="currentAssignment" icon="share--outlined"></mdui-button-icon>
+      <mdui-button-icon v-if="currentAssignment" icon="question_answer--outlined"></mdui-button-icon>
+      <mdui-button-icon style="margin-right: 16px" icon="dark_mode--outlined" @click="toggleTheme"></mdui-button-icon>
+    </div>
+  </div>
 
-          <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
-            <mdui-button-icon v-if="currentAssignment" icon="share--outlined"></mdui-button-icon>
-            <mdui-button-icon v-if="currentAssignment" icon="question_answer--outlined"></mdui-button-icon>
-            <mdui-button-icon style="margin-right:16px" icon="dark_mode--outlined"
-              @click="toggleTheme"></mdui-button-icon>
-          </div>
-        </div>
-        <div v-if="!currentAssignment"
-          style="height: calc(100vh - 168px); display: flex; align-items: center; justify-content: center;">
-          <LottieAnimation :animation-data="animationData" :loop="true" :autoplay="true" :width="250" :height="250" />
-        </div>
-        <!-- 内容 -->
-        <OverlayScrollbarsComponent :options="options" v-if="currentAssignment"
-          style=" height:calc(100vh - 168px); width: 100%;margin-bottom: 0px">
-          <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;" v-if="currentAssignment">
-            <h1>{{ currentAssignment.title }}</h1>
-            <h3><small>创建日期: {{ formatDeadline(currentAssignment.created_at) }} 创建人: {{ currentAssignment.created_by
-                }}</small></h3>
-            <p>{{ currentAssignment.content }}</p>
-          </div>
-        </OverlayScrollbarsComponent>
-        <div v-if="currentAssignment" style="
-          display: flex;
-          justify-content: flex-end;
-          align-items: flex-end;
-          padding-right: 16px;
-          padding-bottom: 16px;
-          padding-top: 8px;
-        ">
-          <mdui-button class="on-surface-variant" variant="outlined" icon="delete" style="margin-right: 8px;">
-            忽略
-          </mdui-button>
-          <mdui-button variant="filled" end-icon="arrow_forward">
-            提交
-          </mdui-button>
-        </div>
-      </div>
+  <!-- 空状态动画 -->
+  <div
+    v-if="!currentAssignment"
+    style="height: calc(100vh - 168px); display: flex; align-items: center; justify-content: center;"
+  >
+    <LottieAnimation :animation-data="animationData" :loop="true" :autoplay="true" :width="250" :height="250" />
+  </div>
+
+  <!-- 内容滚动区域 -->
+  <OverlayScrollbarsComponent :options="options" v-if="currentAssignment" style="flex: 1; width: 100%;">
+    <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;">
+      <h1>{{ currentAssignment.title }}</h1>
+      <h3>
+        <small>
+          创建日期: {{ formatDeadline(currentAssignment.created_at) }}
+          创建人: {{ currentAssignment.created_by }}
+        </small>
+      </h3>
+      <p>{{ currentAssignment.content }}</p>
+    </div>
+  </OverlayScrollbarsComponent>
+
+  <!-- 按钮固定在底部，上移16px -->
+  <div
+    v-if="currentAssignment"
+    style="
+      position: absolute;
+      bottom: 16px; /* 离底部16px */
+      right: 16px;  /* 离右侧16px */
+      display: flex;
+      gap: 8px;
+    "
+  >
+    <mdui-button class="on-surface-variant" variant="outlined" icon="delete">
+      忽略
+    </mdui-button>
+    <mdui-button variant="filled" end-icon="arrow_forward">
+      提交
+    </mdui-button>
+  </div>
+</div>
+
     </div>
   </div>
 </template>
@@ -124,6 +173,10 @@ const router = useRouter()
 const showTopShadow = ref(false)
 const scrollbarRef = ref(null)
 const isInitial = ref(true)
+import { nextTick } from 'vue';
+defineProps({
+  filterStatus: String // 或 String，看你具体类型
+})
 
 const options = ref({
   scrollbars: {
@@ -131,6 +184,26 @@ const options = ref({
     autoHideDelay: 500,
   },
 })
+
+function onSearchSelect(item) {
+    router.push({ name: 'AssignmentDetail', params: { id: item.uuid } })
+    nextTick(() => {
+    const el = document.querySelector(`#assignment-${item.uuid}`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+}
+
+
+
+// 监听路由变化
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId) selectedId.value = newId
+  }
+)
+
+
 
 const toggle = ref(localStorage.getItem("navToggle") === "1") // true/false
 const contentPaddingLeft = ref(toggle.value ? 48 : 8)
@@ -175,10 +248,11 @@ function goDetail(id) {
 }
 
 // 监听筛选按钮事件，刷新作业列表
-function onStatusChange(status) {
-  currentStatus.value = status
-  fetchAssignments(status)
+function onStatusChange(filterStatus) {
+  currentStatus.value = filterStatus
+  fetchAssignments(filterStatus)
 }
+
 
 let intervalId = null
 onMounted(async () => {
@@ -218,7 +292,6 @@ if (!globalStore.classUuids.length) {
         const res = await getAssignments(cls, 1, 10, 'created_at', 'asc', 'pending')
         totalBadge += res.pagination?.total || 0
       }
-      console.log('totalBadge', totalBadge)  // <--- 打印检查
       globalStore.setBadgeCount(totalBadge)
 
       // 刷新作业列表
@@ -268,6 +341,5 @@ watch(
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), transparent);
   z-index: 10;
   border-radius: 8px;
-  /* 你可以调整数值，越大圆角越明显 */
 }
 </style>

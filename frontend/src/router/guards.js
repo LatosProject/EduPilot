@@ -23,29 +23,29 @@ function goHome(next) {
  * 每次路由跳转前执行，用于校验用户是否登录和 token 是否有效
  */
 export async function authGuard(to, from, next) {
-    const token = getAccessToken()
+    // const token = getAccessToken()
 
-    // 无 token 需要权限页面，且不是登录页才跳登录页
-    if (!token && to.meta.requiresAuth && to.name !== 'Login') return goLogin(next)
+    // // 无 token 需要权限页面，且不是登录页才跳登录页
+    // if (!token && to.meta.requiresAuth && to.name !== 'Login') return goLogin(next)
 
-    if (!token) return next()
+    // if (!token) return next()
 
-    const result = await verifyToken()
-    const status = result.status
+    // // const result = await verifyToken()
+    // // const status = result.status
 
-    if (status === 1002) {
-        const result = await refreshToken()
-        const refreshed = result.access_token
-        return refreshed ? goHome(next) : (to.name !== 'Login' ? goLogin(next) : next())
-    }
+    // // if (status === 1002) {
+    // //     const result = await refreshToken()
+    // //     const refreshed = result.access_token
+    // //     return refreshed ? goHome(next) : (to.name !== 'Login' ? goLogin(next) : next())
+    // // }
 
-    if (status === 0) {
-        // 已登录访问登录页，跳首页
-        return to.name === 'Login' ? goHome(next) : next()
-    }
+    // if (status === 0) {
+    //     // 已登录访问登录页，跳首页
+    //     return to.name === 'Login' ? goHome(next) : next()
+    // }
 
-    // 其他情况兜底，且不是登录页才跳登录页
-    if (to.name !== 'Login') return goLogin(next)
+    // // 其他情况兜底，且不是登录页才跳登录页
+    // if (to.name !== 'Login') return goLogin(next)
 
     next()
 }

@@ -4,7 +4,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 2px;
+      gap: 6px;
       margin-top: 16px;
     ">
     <mdui-button v-for="(btn, i) in buttons" :key="i" :variant="btn.selected ? 'filled' : 'tonal'"

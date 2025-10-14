@@ -1,5 +1,5 @@
 <template>
-  <mdui-card :class="selected ? 'card-selected' : 'card-default'">
+  <mdui-card :class="selected ? 'card-default' : 'card-selected'">
     <div style="min-height: 72px;">
       <div
         style="height: 48px; width: 300px; padding-left: 16px; padding-top: 18px; display: flex; align-items: center;">

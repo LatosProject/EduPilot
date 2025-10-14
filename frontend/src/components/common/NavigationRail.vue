@@ -1,5 +1,5 @@
 <template>
-  <mdui-navigation-rail ref="railRef" style="padding-top: 8px" contained>
+  <mdui-navigation-rail ref="railRef" style="padding-top: 16px" contained>
     <!-- 菜单按钮 -->
     <mdui-button-icon
       @click="
@@ -105,7 +105,7 @@ function saveToggle() {
 /* 可扩展 FAB */
 .fab-extend {
   position: absolute;
-  top: 60px;
+  top: 74px;
   left: 12px;
 }
 

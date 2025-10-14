@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { getAssignments } from '../api/assignment'
@@ -6,13 +6,11 @@ import { getAssignments } from '../api/assignment'
 export function useAssignments(classList) {
     const route = useRoute()
     const router = useRouter()
+
     const assignments = ref([])
     const selectedId = ref(null)
     const currentStatus = ref('pending')
-
-    const currentAssignment = computed(() =>
-        assignments.value.find(a => a.uuid === selectedId.value)
-    )
+    const currentAssignment = ref(null) // 改成 ref
 
     async function fetchAssignments(status = 'pending') {
         try {
@@ -26,12 +24,12 @@ export function useAssignments(classList) {
 
             const idInList = route.params.id && assignments.value.some(a => a.uuid === route.params.id)
             if (idInList) {
-                selectedId.value = route.params.id
+                selectAssignment(route.params.id)
             } else if (assignments.value.length > 0) {
-                selectedId.value = assignments.value[0].uuid
-                router.replace({ name: 'AssignmentDetail', params: { id: selectedId.value } })
+                selectAssignment(assignments.value[0].uuid)
             } else {
                 selectedId.value = null
+                currentAssignment.value = null
                 router.replace({ name: 'AssignmentDetail', params: { id: null } })
             }
         } catch (e) {
@@ -39,8 +37,13 @@ export function useAssignments(classList) {
         }
     }
 
+    function selectAssignment(uuid) {
+        selectedId.value = uuid
+        currentAssignment.value = assignments.value.find(a => a.uuid === uuid) || null
+    }
+
     watch(() => route.params.id, (newId) => {
-        if (newId) selectedId.value = newId
+        if (newId) selectAssignment(newId)
     })
 
     return {
@@ -49,6 +52,7 @@ export function useAssignments(classList) {
         currentStatus,
         currentAssignment,
         fetchAssignments,
+        selectAssignment, // 暴露出来
         router
     }
 }

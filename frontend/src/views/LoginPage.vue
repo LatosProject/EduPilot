@@ -15,9 +15,9 @@
         padding: 24px;
         overflow: hidden;
       ">
-            <!-- 绝对定位进度条 -->
             <mdui-linear-progress v-if="isLoading"
                 style="position: absolute; left: 24px; top: 0; height: 4px; width: calc(100% - 48px);"></mdui-linear-progress>
+
             <span style="
           font-family: 'Noto Sans SC';
           font-size: 32px;
@@ -29,6 +29,7 @@
                 <template v-if="step === 2 && username">{{ username }}</template>
                 <template v-else>登录</template>
             </span>
+
             <span style="
           font-family: 'Noto Sans SC';
           font-size: 16px;
@@ -122,6 +123,7 @@ const handleNext = () => {
 }
 
 const handleBack = () => {
+    password.value = ''  // 清空密码
     router.push('/login')
 }
 
@@ -130,7 +132,7 @@ const handleLogin = async () => {
     const now = Date.now()
     if (now - lastClickTime < 1000) return
     lastClickTime = now
-    if (isLoading.value) return   // 正在处理就直接返回
+    if (isLoading.value) return
     isLoading.value = true;
     error.value = ''
     if (!password.value) {
@@ -189,7 +191,6 @@ onMounted(async () => {
 .input-slide-container {
     overflow: hidden;
     height: 80px;
-    /* 适应输入框高度 */
     position: relative;
 }
 
@@ -197,7 +198,6 @@ onMounted(async () => {
     transition: transform 0.4s ease, opacity 0.4s ease;
 }
 
-/* 用户名输入框进入和退出 */
 .slide-in-left {
     transform: translateX(0);
     opacity: 1;
@@ -208,7 +208,6 @@ onMounted(async () => {
     opacity: 0;
 }
 
-/* 密码输入框进入和退出 */
 .slide-in-right {
     transform: translateX(0);
     opacity: 1;
