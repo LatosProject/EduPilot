@@ -9,6 +9,10 @@ export function login(username, password) {
   return request.post('/api/v1/auth/login', { username, password })
 }
 
+export function logoutApi(){
+  return request.post('/api/v1/auth/logout')
+}
+
 // 获取本地存储的 access_token
 export function getAccessToken() {
   return localStorage.getItem('access_token')
@@ -18,7 +22,6 @@ export function getAccessToken() {
 export function getProfile() {
   return request.get('/api/v1/auth/profile')
 }
-
 
 // 刷新 token，调用后端刷新接口，返回新的 access_token 和过期时间
 export async function refreshToken() {

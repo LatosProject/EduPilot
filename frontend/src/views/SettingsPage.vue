@@ -60,6 +60,7 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue'
+import { logoutApi } from '../api/auth'
 import NavigationRail from '../components/common/NavigationRail.vue'
 import { useRouter } from 'vue-router'
 import { setTheme } from 'mdui/functions/setTheme.js';
@@ -76,9 +77,11 @@ function onMenuClick() {
   contentPaddingLeft.value = toggle.value ? 48 : 8
 }
 
+
 function logout() {
   localStorage.removeItem('access_token')
-  router.push('/login')
+  router.replace({ name: 'Login' });
+  logoutApi()  
 }
 function openColorPickerDialog() {
   if (colorPickerDialog.value) {

@@ -132,3 +132,10 @@ async def verify_token_route(current_user: User = Depends(get_current_user)):
         "令牌验证成功: 用户名: %s, UUID: %s", current_user.username, current_user.uuid
     )
     return to_response(message="Token is valid")
+
+
+@router.post("/logout", response_model=Union[ApiResponse, ErrorResponse])
+async def logout_route():
+    response= to_response()
+    response.delete_cookie(key="refresh_token", path="/api/v1/auth/refresh")
+    return response

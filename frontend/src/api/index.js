@@ -1,42 +1,90 @@
 // src/apis/index.js
 
-import axios from 'axios'
-import { refreshToken } from './auth'
+import axios from "axios";
+import { refreshToken } from "./auth";
+import router from '@/router'
 
 const instance = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: "http://localhost:8000",
   timeout: 5000,
   withCredentials: true,
-})
+});
 
-instance.interceptors.request.use(config => {
-  const token = localStorage.getItem('access_token')
+instance.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access_token");
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return config
-})
+  return config;
+});
+
+
+const MAX_RETRY_ATTEMPTS = 3;
+const REFRESH_RETRY_DELAY = 300;
+
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+function subscribeTokenRefresh(cb) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshed(token) {
+  refreshSubscribers.forEach(cb => cb(token));
+  refreshSubscribers = [];
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 instance.interceptors.response.use(
-  response => response,
-  async error => {
-    if (error.response) {
-      const status = error.response.status
-      if (status === 401) {
-        try {
-          refreshToken()
-          const newToken = localStorage.getItem('access_token')
-          error.config.headers.Authorization = `Bearer ${newToken}`
-          return instance(error.config)
-        } catch (err) {
-          //彻底重置应用状态（有时在拦截器里用 router.push，
-          //页面跳转后 axios 可能还在继续执行，容易造成状态不一致或重复跳转）
-          window.location.href = '/login'
-          return Promise.reject(err)
+  (response) => response,
+
+  async (error) => {
+    if (error.response && error.response.status === 401) {
+      const originalRequest = error.config;
+
+      // 如果正在刷新，则排队
+      if (isRefreshing) {
+        return new Promise(resolve => {
+          subscribeTokenRefresh((token) => {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            resolve(instance(originalRequest));
+          });
+        });
+      }
+
+      isRefreshing = true;
+
+      try {
+        for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+          try {
+            await refreshToken();
+            const newToken = localStorage.getItem('access_token');
+
+            onRefreshed(newToken);
+            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+            return instance(originalRequest);
+          } catch (err) {
+            console.error(`刷新失败，第${attempt}次，等待${REFRESH_RETRY_DELAY}ms`, err);
+            await sleep(REFRESH_RETRY_DELAY);
+          }
         }
+
+        // 三次都失败
+        console.error('刷新 token 多次失败，跳转登录');
+        localStorage.removeItem('access_token');
+        await router.replace({'name':'Login'});
+        return Promise.reject(error);
+
+      } finally {
+        isRefreshing = false;   // 确保状态恢复
       }
     }
-    return Promise.reject(error)
+
+    return Promise.reject(error);
   }
-)
-export default instance
+);
+
+export default instance;

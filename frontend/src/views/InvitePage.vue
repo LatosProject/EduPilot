@@ -40,7 +40,7 @@
             <!-- 输入框 -->
             <mdui-text-field ref="invitecodeField" v-model="inviteCode" variant="outlined" label="邀请码"
                 style="margin-top: 12px; width: 100%;" />
-       <div style="
+            <div style="
           position: absolute;
           left: 8px;
           bottom: 18px;
@@ -48,8 +48,8 @@
           background-color: transparent;
         ">
                 <mdui-button type="button"
-                    style="color: rgb(var(--mdui-color-primary-light)); background-color: transparent;"
-                    @click=logout()> 退出登录</mdui-button>
+                    style="color: rgb(var(--mdui-color-primary-light)); background-color: transparent;" @click=logout()>
+                    退出登录</mdui-button>
             </div>
 
             <div style="position: absolute; right: 18px; bottom: 18px;">
@@ -65,6 +65,7 @@
 import { ref } from "vue";
 import { joinClass } from "../api/classes";
 import { useGlobalStore } from '../stores/global'
+import { logoutApi } from '../api/auth'
 const globalStore = useGlobalStore()
 const invitecodeField = ref(null)
 import { useRouter } from 'vue-router';
@@ -80,20 +81,21 @@ const handleJoin = async () => {
     invitecodeField.value?.reportValidity()
 
 
-try {
-    const res = await joinClass(inviteCode.value);
-    const classUuid = res.data.data.class_uuid; 
-    globalStore.setClassUuids([...globalStore.classUuids, classUuid]);
-    router.push({ name: 'Home' });
-} catch (err) {
-    if (err.response?.data?.message) {
-        invitecodeField.value?.setCustomValidity(err.response.data.message);
-        invitecodeField.value?.reportValidity();
+    try {
+        const res = await joinClass(inviteCode.value);
+        const classUuid = res.data.data.class_uuid;
+        globalStore.setClassUuids([...globalStore.classUuids, classUuid]);
+        router.push({ name: 'Home' });
+    } catch (err) {
+        if (err.response?.data?.message) {
+            invitecodeField.value?.setCustomValidity(err.response.data.message);
+            invitecodeField.value?.reportValidity();
+        }
     }
-}
 };
 function logout() {
-  localStorage.removeItem('access_token')
-  router.push('/login')
+    logoutApi()
+    localStorage.removeItem('access_token')
+    router.push('/login')
 }
 </script>

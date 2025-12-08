@@ -266,11 +266,13 @@ try {
 const classList = res?.items?.map(i => i.class_uuid).filter(Boolean) ?? []
 globalStore.setClassUuids(classList)
 // 安全判断长度
-if (!globalStore.classUuids.length) {
+//console.log('Token:', localStorage.getItem('access_token'));
+if (!globalStore.classUuids.length && localStorage.getItem('access_token' !== null)) {
   // 数组为空，跳转到 Invite 页面
-  router.push({ name: 'Invite' })
+  router.replace({ name: 'Invite' })
   return
 }
+
   // if (items.length > 0) {
   //   console.log(items)
   //   const classUuid = items[0].class_uuid
