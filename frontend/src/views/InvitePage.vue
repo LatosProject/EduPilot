@@ -62,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { joinClass } from "../api/classes";
 import { useGlobalStore } from '../stores/global'
 import { logoutApi } from '../api/auth'
@@ -98,4 +98,15 @@ function logout() {
     localStorage.removeItem('access_token')
     router.push('/login')
 }
+onMounted(async () => {     
+if (globalStore.classUuids.length && localStorage.getItem('access_token') !== null) {
+    router.replace({ name: 'Home' })
+    return
+}
+else if (!globalStore.classUuids.length && localStorage.getItem('access_token') !== null) {
+    router.replace({ name: 'Invite' })
+    return
+}
+
+})
 </script>

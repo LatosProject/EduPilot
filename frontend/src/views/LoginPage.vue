@@ -89,7 +89,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { login } from '../api/auth'
 import 'mdui/components/text-field.js'
-
+import { useGlobalStore } from '../stores/global'
 const route = useRoute()
 const router = useRouter()
 
@@ -100,7 +100,7 @@ const password = ref('')
 const error = ref('')
 const isLoading = ref(false);
 const step = computed(() => (route.path.endsWith('password') ? 2 : 1))
-
+const globalStore = useGlobalStore()
 const onUsernameInput = (e) => {
     username.value = e.target.value
 }
@@ -164,6 +164,7 @@ const handleLogin = async () => {
     }
 }
 
+
 const handleRegister = () => {
     alert('此网站暂未开放，请联系网络管理员。')
 }
@@ -184,7 +185,20 @@ onMounted(async () => {
     if (step.value === 2 && !username.value) {
         router.replace('/login')
     }
+     
+if (globalStore.classUuids.length && localStorage.getItem('access_token') !== null) {
+    router.replace({ name: 'Home' })
+    return
+}
+else if (!globalStore.classUuids.length && localStorage.getItem('access_token') !== null) {
+    router.replace({ name: 'Invite' })
+    return
+}
+
 })
+
+
+
 </script>
 
 <style scoped>

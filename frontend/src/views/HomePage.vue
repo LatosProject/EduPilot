@@ -5,7 +5,7 @@
     <NavigationRail @menu-click="onMenuClick" />
     <!-- 右侧内容区域 -->
 
-<div :style="{
+    <div :style="{
       flexGrow: 1,
       display: 'flex',
       paddingLeft: contentPaddingLeft + 'px',
@@ -15,32 +15,27 @@
     }">
       <!-- 左侧固定宽度区域 -->
       <div style="width: 480px; min-width: 480px;">
-<div style="display: flex; align-items: center; width: 100%;">
-  <!-- 左侧文字 Logo -->
-       <!-- LOGO -->
-    <img
-      src="@/assets/logo.png"
-      alt="logo"
-      style="width: 32px; height: 32px;"
-    />
-  <span
-    style="
+        <div style="display: flex; align-items: center; width: 100%;">
+          <!-- 左侧文字 Logo -->
+          <!-- LOGO -->
+          <img src="@/assets/logo.png" alt="logo" style="width: 32px; height: 32px;" />
+          <span style="
       font-size: 21px;
       font-weight: 400;
       color: rgb(var(--mdui-color-primary));
       margin-left: 8px;
       margin-top: 6px;
-    "
-  >
-    EduPilot
-  </span>
+    ">
+            EduPilot
+          </span>
 
-  <!-- 占位弹性空间，让左右分开 -->
-  <div style="flex: 1;"></div>
+          <!-- 占位弹性空间，让左右分开 -->
+          <div style="flex: 1;"></div>
 
-  <!-- 右侧搜索框 -->
-  <SearchCard @search="onSearchSelect" :filter-status="currentStatus" style="position: absolute; width: 720px; margin-right: 80px; height: 48px;margin-left: 185px; margin-top: 4px;" />
-</div>
+          <!-- 右侧搜索框 -->
+          <SearchCard @search="onSearchSelect" :filter-status="currentStatus"
+            style="position: absolute; width: 720px; margin-right: 80px; height: 48px;margin-left: 185px; margin-top: 4px;" />
+        </div>
 
         <!-- 搜索框下方按钮组，绑定筛选事件 -->
         <TaskButtonGroup style="margin-bottom: 16px; margin-top:28px ;" @status-change="onStatusChange" />
@@ -52,17 +47,10 @@
             <!-- 在内部根据 assignments.length > 0 来决定显示列表或“尚无作业” -->
             <div v-if="assignments.length > 0">
               <div style="margin-left: 4px;margin-right: 4px ;margin-top: 4px; ">
-                <AssignmentCard style="margin-bottom: 16px"
-  v-for="assignment in assignments"
-  :key="assignment.uuid"
-  :id="`assignment-${assignment.uuid}`"
-  :title="assignment.title"
-  @click="goDetail(assignment.uuid)"
-  :deadline="formatDeadline(assignment.deadline)"
-  :description="assignment.description"
-  :selected="assignment.uuid=== selectedId"
-
-/>
+                <AssignmentCard style="margin-bottom: 16px" v-for="assignment in assignments" :key="assignment.uuid"
+                  :id="`assignment-${assignment.uuid}`" :title="assignment.title" @click="goDetail(assignment.uuid)"
+                  :deadline="formatDeadline(assignment.deadline)" :description="assignment.description"
+                  :selected="assignment.uuid === selectedId" />
 
               </div>
             </div>
@@ -79,9 +67,8 @@
         </div>
       </div>
 
-<!-- 主体内容卡片容器 -->
-<div
-  style="
+      <!-- 主体内容卡片容器 -->
+      <div style="
     position: relative; /* 必须加上这行！！ */
     min-width: 480px;
     flex-grow: 1;
@@ -91,58 +78,53 @@
     background-color: rgb(var(--mdui-color-surface-container-lowest));
     box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.20);
     border-radius: var(--mdui-shape-corner-extra-large);
-  "
->
-  <!-- 顶部工具栏 -->
-  <div style="display: flex; align-items: center; height: 56px;">
-    <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
-      <mdui-button-icon v-if="currentAssignment" icon="share--outlined"></mdui-button-icon>
-      <mdui-button-icon v-if="currentAssignment" icon="question_answer--outlined"></mdui-button-icon>
-      <mdui-button-icon style="margin-right: 16px" icon="dark_mode--outlined" @click="toggleTheme"></mdui-button-icon>
-    </div>
-  </div>
+  ">
+        <!-- 顶部工具栏 -->
+        <div style="display: flex; align-items: center; height: 56px;">
+          <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+            <mdui-button-icon v-if="currentAssignment" icon="share--outlined"></mdui-button-icon>
+            <mdui-button-icon v-if="currentAssignment" icon="question_answer--outlined"></mdui-button-icon>
+            <mdui-button-icon style="margin-right: 16px" icon="dark_mode--outlined"
+              @click="toggleTheme"></mdui-button-icon>
+          </div>
+        </div>
 
-  <!-- 空状态动画 -->
-  <div
-    v-if="!currentAssignment"
-    style="height: calc(100vh - 168px); display: flex; align-items: center; justify-content: center;"
-  >
-    <LottieAnimation :animation-data="animationData" :loop="true" :autoplay="true" :width="250" :height="250" />
-  </div>
+        <!-- 空状态动画 -->
+        <div v-if="!currentAssignment"
+          style="height: calc(100vh - 168px); display: flex; align-items: center; justify-content: center;">
+          <LottieAnimation :animation-data="animationData" :loop="true" :autoplay="true" :width="250" :height="250" />
+        </div>
 
-  <!-- 内容滚动区域 -->
-  <OverlayScrollbarsComponent :options="options" v-if="currentAssignment" style="flex: 1; width: 100%;">
-    <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;">
-      <h1>{{ currentAssignment.title }}</h1>
-      <h3>
-        <small>
-          创建日期: {{ formatDeadline(currentAssignment.created_at) }}
-          创建人: {{ currentAssignment.created_by }}
-        </small>
-      </h3>
-      <p>{{ currentAssignment.content }}</p>
-    </div>
-  </OverlayScrollbarsComponent>
+        <!-- 内容滚动区域 -->
+        <OverlayScrollbarsComponent :options="options" v-if="currentAssignment" style="flex: 1; width: 100%;">
+          <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;">
+            <h1>{{ currentAssignment.title }}</h1>
+            <h3>
+              <small>
+                创建日期: {{ formatDeadline(currentAssignment.created_at) }}
+                创建人: {{ currentAssignment.created_by }}
+              </small>
+            </h3>
+            <p>{{ currentAssignment.content }}</p>
+          </div>
+        </OverlayScrollbarsComponent>
 
-  <!-- 按钮固定在底部，上移16px -->
-  <div
-    v-if="currentAssignment"
-    style="
+        <!-- 按钮固定在底部，上移16px -->
+        <div v-if="currentAssignment" style="
       position: absolute;
       bottom: 16px; /* 离底部16px */
       right: 16px;  /* 离右侧16px */
       display: flex;
       gap: 8px;
-    "
-  >
-    <mdui-button class="on-surface-variant" variant="outlined" icon="delete">
-      忽略
-    </mdui-button>
-    <mdui-button variant="filled" end-icon="arrow_forward">
-      提交
-    </mdui-button>
-  </div>
-</div>
+    ">
+          <mdui-button class="on-surface-variant" variant="outlined" icon="delete">
+            忽略
+          </mdui-button>
+          <mdui-button variant="filled" end-icon="arrow_forward">
+            提交
+          </mdui-button>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -175,7 +157,7 @@ const scrollbarRef = ref(null)
 const isInitial = ref(true)
 import { nextTick } from 'vue';
 defineProps({
-  filterStatus: String // 或 String，看你具体类型
+  filterStatus: String
 })
 
 const options = ref({
@@ -186,8 +168,8 @@ const options = ref({
 })
 
 function onSearchSelect(item) {
-    router.push({ name: 'AssignmentDetail', params: { id: item.uuid } })
-    nextTick(() => {
+  router.push({ name: 'AssignmentDetail', params: { id: item.uuid } })
+  nextTick(() => {
     const el = document.querySelector(`#assignment-${item.uuid}`);
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
@@ -256,22 +238,32 @@ function onStatusChange(filterStatus) {
 
 let intervalId = null
 onMounted(async () => {
-    isInitial.value = false
-let res = null
-try {
-  res = await getClass()
-} catch(e) {
-  console.error('getClass failed', e)
+  isInitial.value = false
+  let res = null
+  try {
+    res = await getClass()
+  } catch (e) {
+    console.error('getClass failed', e)
+  }
+  const classList = res?.items?.map(i => i.class_uuid).filter(Boolean) ?? []
+  globalStore.setClassUuids(classList)
+  // 安全判断长度
+  //console.log('Token:', localStorage.getItem('access_token'));
+onMounted(async () => {
+    if (step.value === 2 && !username.value) {
+        router.replace('/login')
+    }
+     
+if (globalStore.classUuids.length && localStorage.getItem('access_token') !== null) {
+    router.replace({ name: 'Home' })
+    return
 }
-const classList = res?.items?.map(i => i.class_uuid).filter(Boolean) ?? []
-globalStore.setClassUuids(classList)
-// 安全判断长度
-//console.log('Token:', localStorage.getItem('access_token'));
-if (!globalStore.classUuids.length && localStorage.getItem('access_token' !== null)) {
-  // 数组为空，跳转到 Invite 页面
-  router.replace({ name: 'Invite' })
-  return
+if (!globalStore.classUuids.length && localStorage.getItem('access_token') !== null) {
+    router.replace({ name: 'Invite' })
+    return
 }
+
+})
 
   // if (items.length > 0) {
   //   console.log(items)
