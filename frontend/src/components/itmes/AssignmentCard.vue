@@ -45,7 +45,7 @@
               margin: 0;
               padding-bottom: 2px;
             ">
-            {{ deadline }}
+            截止日期 {{ deadline }}
           </p>
         </div>
       </div>

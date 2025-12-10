@@ -86,7 +86,7 @@
                 color: rgb(var(--mdui-color-on-surface-variant));
               ">
               <span>创建者: {{ item.created_by || '未知' }}</span>
-              <span>截止: {{ item.dueDate || '暂无' }}</span>
+              <span>截止日期: {{ item.dueDate || '暂无' }}</span>
             </div>
           </div>
         </div>
