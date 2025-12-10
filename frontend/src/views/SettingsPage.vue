@@ -82,7 +82,9 @@ import { logoutApi } from '../api/auth'
 import { setTheme } from 'mdui/functions/setTheme.js';
 import { setColorScheme } from 'mdui/functions/setColorScheme.js';
 import iro from '@jaames/iro';
+import { useGlobalStore } from '../stores/global'
 
+const globalStore = useGlobalStore()
 // 路由
 const router = useRouter()
 
@@ -123,7 +125,8 @@ onMounted(() => {
     width: 320,
     borderWidth: 2,
     color: savedThemeColor,
-  })
+  }
+)
 
   // 设置初始主题色
   setColorScheme(savedThemeColor)
@@ -148,5 +151,10 @@ onMounted(() => {
       localStorage.setItem('theme', 'light')
     }
   })
+    // 已登录但未加入班级 → 邀请页
+    if (!globalStore.classUuids.length && localStorage.getItem('access_token') !== null) {
+        router.replace({ name: 'Invite' })
+        return
+    }
 })
 </script>

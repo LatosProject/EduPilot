@@ -2,7 +2,7 @@
 
 // 从 Vue Router 导入创建路由的方法
 
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
 
 import HomePage from "../views/HomePage.vue";
 import InvitePage from "../views/InvitePage.vue";
@@ -57,11 +57,16 @@ const routes = [
     path: "/invite",
     component: InvitePage,
   },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: () => import("../views/NotFound.vue"),
+  },
 ];
 
 // 创建路由实例
 const router = createRouter({
-  history: createWebHistory(), 
+  history: createWebHistory(),
   routes,
 });
 
