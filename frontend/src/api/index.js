@@ -1,15 +1,16 @@
 // src/apis/index.js
-
 import axios from "axios";
 import { refreshToken } from "./auth";
-import router from '@/router'
+import router from '@/router';
 
+// 创建 Axios 实例
 const instance = axios.create({
   baseURL: "http://localhost:8000",
   timeout: 5000,
   withCredentials: true,
 });
 
+// 请求拦截器：注入 token
 instance.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
   if (token) {
@@ -18,34 +19,48 @@ instance.interceptors.request.use((config) => {
   return config;
 });
 
+// --- 响应拦截器设置刷新机制 ---
+const MAX_RETRY_ATTEMPTS = 3;    // 最大重试次数
+const REFRESH_RETRY_DELAY = 300; // 每次重试延迟(ms)
 
-const MAX_RETRY_ATTEMPTS = 3;
-const REFRESH_RETRY_DELAY = 300;
+let isRefreshing = false;        // 是否正在刷新 token
+let refreshSubscribers = [];     // 刷新队列
 
-let isRefreshing = false;
-let refreshSubscribers = [];
-
+/**
+ * 添加回调到刷新队列
+ * @param {Function} cb 回调函数
+ */
 function subscribeTokenRefresh(cb) {
   refreshSubscribers.push(cb);
 }
 
+/**
+ * token 刷新完成后通知队列中的请求
+ * @param {String} token 新 token
+ */
 function onRefreshed(token) {
   refreshSubscribers.forEach(cb => cb(token));
   refreshSubscribers = [];
 }
 
+/**
+ * 延迟函数
+ * @param {Number} ms 毫秒
+ */
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 instance.interceptors.response.use(
-  (response) => response,
+  response => response,
 
   async (error) => {
-    if (error.response && error.response.status === 401) {
-      const originalRequest = error.config;
+    const originalRequest = error.config;
 
-      // 如果正在刷新，则排队
+    // 401 未授权处理
+    if (error.response && error.response.status === 401) {
+
+      // 正在刷新，加入队列等待
       if (isRefreshing) {
         return new Promise(resolve => {
           subscribeTokenRefresh((token) => {
@@ -63,7 +78,10 @@ instance.interceptors.response.use(
             await refreshToken();
             const newToken = localStorage.getItem('access_token');
 
+            // 通知等待队列
             onRefreshed(newToken);
+
+            // 重试原请求
             originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
             return instance(originalRequest);
           } catch (err) {
@@ -72,14 +90,14 @@ instance.interceptors.response.use(
           }
         }
 
-        // 三次都失败
+        // 多次刷新失败，清理并跳转登录
         console.error('刷新 token 多次失败，跳转登录');
         localStorage.removeItem('access_token');
-        await router.replace({'name':'Login'});
+        await router.replace({ name: 'Login' });
         return Promise.reject(error);
 
       } finally {
-        isRefreshing = false;   // 确保状态恢复
+        isRefreshing = false; // 确保状态恢复
       }
     }
 

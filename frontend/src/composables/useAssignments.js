@@ -3,18 +3,35 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { getAssignments } from '../api/assignment'
 
+/**
+ * 自定义组合函数：管理作业列表、选中状态和路由同步
+ * @param {Array} classList 班级 UUID 列表
+ */
 export function useAssignments(classList) {
-    const route = useRoute()
-    const router = useRouter()
+    const route = useRoute()   // 获取当前路由信息
+    const router = useRouter() // 路由跳转工具
 
+    // 所有作业列表
     const assignments = ref([])
-    const selectedId = ref(null)
-    const currentStatus = ref('pending')
-    const currentAssignment = ref(null) // 改成 ref
 
+    // 当前选中作业 UUID
+    const selectedId = ref(null)
+
+    // 当前过滤状态（pending / done / expired）
+    const currentStatus = ref('pending')
+
+    // 当前选中的作业对象
+    const currentAssignment = ref(null)
+
+    /**
+     * 获取作业列表
+     * @param {String} status 过滤状态，默认 'pending'
+     */
     async function fetchAssignments(status = 'pending') {
         try {
             const allHomework = []
+
+            // 顺序获取每个班级作业
             for (const cls of classList) {
                 const res = await getAssignments(cls, 1, 10, 'created_at', 'asc', status)
                 allHomework.push(...res.items)
@@ -22,12 +39,17 @@ export function useAssignments(classList) {
 
             assignments.value = allHomework
 
+            // 判断路由中 id 是否在作业列表中
             const idInList = route.params.id && assignments.value.some(a => a.uuid === route.params.id)
+
             if (idInList) {
+                // 如果路由 id 存在，选中对应作业
                 selectAssignment(route.params.id)
             } else if (assignments.value.length > 0) {
+                // 否则默认选中第一个作业
                 selectAssignment(assignments.value[0].uuid)
             } else {
+                // 作业列表为空，清空选中状态并路由跳转到空 id
                 selectedId.value = null
                 currentAssignment.value = null
                 router.replace({ name: 'AssignmentDetail', params: { id: null } })
@@ -37,22 +59,27 @@ export function useAssignments(classList) {
         }
     }
 
+    /**
+     * 选中作业
+     * @param {String} uuid 作业 UUID
+     */
     function selectAssignment(uuid) {
         selectedId.value = uuid
         currentAssignment.value = assignments.value.find(a => a.uuid === uuid) || null
     }
 
+    // 监听路由 id 变化，保持选中作业同步
     watch(() => route.params.id, (newId) => {
         if (newId) selectAssignment(newId)
     })
 
     return {
-        assignments,
-        selectedId,
-        currentStatus,
-        currentAssignment,
-        fetchAssignments,
-        selectAssignment, // 暴露出来
-        router
+        assignments,        // 作业列表
+        selectedId,         // 当前选中作业 UUID
+        currentStatus,      // 当前过滤状态
+        currentAssignment,  // 当前选中作业对象
+        fetchAssignments,   // 获取作业列表函数
+        selectAssignment,   // 选中作业函数
+        router,             // 路由实例
     }
 }

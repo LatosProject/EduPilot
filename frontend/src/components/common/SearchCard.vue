@@ -1,5 +1,6 @@
 <template>
   <div style="position: relative; width: 100%;">
+    <!-- 搜索卡片 -->
     <mdui-card
       ref="cardRef"
       :class="{ 'card-focused': isEditing }"
@@ -15,6 +16,7 @@
       "
       @click="startEditing"
     >
+      <!-- 搜索图标 -->
       <mdui-icon
         name="search"
         style="
@@ -25,6 +27,7 @@
         "
       ></mdui-icon>
 
+      <!-- 输入框 -->
       <input
         ref="searchInput"
         v-model="keyword"
@@ -50,6 +53,7 @@
         @keydown.enter.prevent="emitSearch"
       />
 
+      <!-- 用户头像 -->
       <template v-if="user && user.avatar_url">
         <mdui-button-icon style="margin-left: auto; margin-right: 8px">
           <img
@@ -70,6 +74,7 @@
     <!-- 下拉建议框 -->
     <div
       v-if="showSuggestions"
+      ref="suggestionBox"
       style="
         position: absolute;
         top: 60px;
@@ -82,8 +87,8 @@
         overflow: auto;
         max-height: 300px;
       "
-      ref="suggestionBox"
     >
+      <!-- 有搜索结果 -->
       <template v-if="suggestions.length > 0">
         <div
           v-for="(item, index) in suggestions"
@@ -123,6 +128,8 @@
           </div>
         </div>
       </template>
+
+      <!-- 无搜索结果 -->
       <template v-else>
         <div
           style="
@@ -145,34 +152,42 @@ import { useGlobalStore } from "../../stores/global";
 import { formatDeadline } from "../../utils/date";
 
 const emit = defineEmits(["search"]);
+const props = defineProps({
+  filterStatus: String
+});
+
+const globalStore = useGlobalStore();
+
+// 用户信息
 const user = ref(null);
+
+// 输入框状态
 const isEditing = ref(false);
 const keyword = ref("");
 const showSuggestions = ref(false);
 const suggestions = ref([]);
 const hoverIndex = ref(-1);
+
+// DOM 引用
 const searchInput = ref(null);
 const suggestionBox = ref(null);
 
-const globalStore = useGlobalStore();
 let debounceTimer = null;
-const props = defineProps({
-  filterStatus: String
-});
-const { filterStatus } = props;
 
+// --- 搜索建议 ---
 async function fetchSuggestions(query) {
   if (!query.trim()) {
     suggestions.value = [];
     return;
   }
+
   if (debounceTimer) clearTimeout(debounceTimer);
 
   debounceTimer = setTimeout(async () => {
     try {
       const results = await Promise.all(
         globalStore.classUuids.map(cls =>
-          getAssignments(cls, 1, 10, "created_at", "asc", filterStatus)
+          getAssignments(cls, 1, 10, "created_at", "asc", props.filterStatus)
             .then(res =>
               res.items.map(item => ({
                 title: item.title,
@@ -197,25 +212,29 @@ async function fetchSuggestions(query) {
   }, 300);
 }
 
+// --- 输入事件 ---
 function onInput() {
   showSuggestions.value = true;
   fetchSuggestions(keyword.value);
 }
 
+// 选择搜索结果
 function selectSuggestion(item) {
   keyword.value = item.title || "";
   showSuggestions.value = false;
   emit("search", item);
 }
 
+// 确认搜索
 function emitSearch() {
-  const val = keyword.value || "";
-  if (val.trim()) {
-    emit("search", val.trim());
+  const val = keyword.value?.trim();
+  if (val) {
+    emit("search", val);
     showSuggestions.value = false;
   }
 }
 
+// 输入框失焦
 function onBlur() {
   setTimeout(() => {
     showSuggestions.value = false;
@@ -223,6 +242,7 @@ function onBlur() {
   }, 150);
 }
 
+// 点击卡片开始编辑
 function startEditing() {
   isEditing.value = true;
   if (keyword.value.trim() && suggestions.value.length > 0) {
@@ -232,13 +252,13 @@ function startEditing() {
   nextTick(() => searchInput.value?.focus());
 }
 
-// 默认选中第一个
+// 默认选中第一个建议
 watch(suggestions, (newVal) => {
   hoverIndex.value = newVal.length > 0 ? 0 : -1;
   scrollToHover();
 });
 
-// 键盘选择
+// 键盘操作
 function onKeydown(e) {
   if (!showSuggestions.value || suggestions.value.length === 0) return;
 
@@ -262,7 +282,7 @@ function onKeydown(e) {
   }
 }
 
-// 滚动到高亮选中项
+// 滚动到当前高亮项
 function scrollToHover() {
   nextTick(() => {
     const box = suggestionBox.value;
@@ -279,6 +299,7 @@ function scrollToHover() {
   });
 }
 
+// 获取用户信息
 onMounted(async () => {
   try {
     const res = await getProfile();

@@ -1,6 +1,8 @@
 <template>
+  <!-- 左侧导航栏 -->
   <mdui-navigation-rail ref="railRef" style="padding-top: 16px" contained>
-    <!-- 菜单按钮 -->
+    
+    <!-- 菜单切换按钮 -->
     <mdui-button-icon
       @click="
         $emit('menu-click');
@@ -11,7 +13,7 @@
       :icon="toggle ? 'menu_open' : 'menu'"
     ></mdui-button-icon>
 
-    <!-- 占位 FAB -->
+    <!-- 占位 FAB，用于布局对齐 -->
     <mdui-fab class="fab-fake"></mdui-fab>
 
     <!-- 可扩展 FAB -->
@@ -25,13 +27,13 @@
       编辑
     </mdui-fab>
 
-    <!-- 导航项 -->
+    <!-- 导航项列表 -->
     <mdui-navigation-rail-item
       v-for="item in navItems"
       :key="item.path"
       :class="[
         'label-medium secondary',
-        { 'custom-toggle-style': toggle, 'toggle-active': toggle,'.custom-toggle-style':toggle },
+        { 'custom-toggle-style': toggle, 'toggle-active': toggle }
       ]"
       :icon="item.icon"
       :value="item.value"
@@ -43,27 +45,31 @@
 </template>
 
 <script setup>
+import { ref, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { onMounted, watch, ref } from "vue";
 
+// 路由实例
 const router = useRouter();
 const route = useRoute();
+
+// ref
 const railRef = ref(null);
 const savedToggle = localStorage.getItem("navToggle");
-const toggle = ref(savedToggle === "1"); // 初始化读取 localStorage
+const toggle = ref(savedToggle === "1"); // 从 localStorage 初始化 toggle 状态
 
+// 导航项
 const navItems = [
   { label: "主页", path: "/", icon: "inbox--rounded", value: "home" },
   { label: "学习", path: "/study", icon: "book--rounded", value: "study" },
   { label: "设置", path: "/settings", icon: "settings--rounded", value: "setting" },
 ];
 
-// 点击跳转
+// 点击导航项跳转
 function go(item) {
   router.push(item.path);
 }
 
-// 路由同步选中状态
+// 根据当前路由同步选中状态
 function syncActiveValue(path) {
   const found = navItems.find((i) => i.path === path);
   if (railRef.value) {
@@ -71,28 +77,28 @@ function syncActiveValue(path) {
   }
 }
 
-onMounted(() => {
-  syncActiveValue(route.path);
-});
-
-// 监听路由变化
-watch(
-  () => route.path,
-  (newPath) => {
-    syncActiveValue(newPath);
-  
-  }
-);
-
-// --- 保存 toggle 状态到 localStorage ---
+// 保存 toggle 状态到 localStorage
 function saveToggle() {
   localStorage.setItem("navToggle", toggle.value ? "1" : "0");
   console.log("Saved toggle:", toggle.value);
 }
+
+// 页面挂载后同步路由选中状态
+onMounted(() => {
+  syncActiveValue(route.path);
+});
+
+// 监听路由变化，动态同步选中状态
+watch(
+  () => route.path,
+  (newPath) => {
+    syncActiveValue(newPath);
+  }
+);
 </script>
 
 <style scoped>
-/* FAB 占位 */
+/* 占位 FAB，用于保持布局一致 */
 .fab-fake {
   opacity: 0;
   pointer-events: none;
@@ -102,7 +108,7 @@ function saveToggle() {
   transition: width 0.3s ease;
 }
 
-/* 可扩展 FAB */
+/* 可扩展 FAB 样式 */
 .fab-extend {
   position: absolute;
   top: 74px;
@@ -113,7 +119,7 @@ function saveToggle() {
   width: 160px;
 }
 
-/* 导航文字样式 */
+/* 自定义导航文字样式 */
 ::v-deep(.custom-toggle-style) {
   height: 3.5rem;
   position: relative;
@@ -136,7 +142,7 @@ function saveToggle() {
   opacity: 1;
 }
 
-/* 导航指示器 */
+/* 自定义导航指示器样式 */
 ::v-deep(mdui-navigation-rail-item.custom-toggle-style)::part(indicator) {
   position: absolute;
   top: 0;
@@ -177,7 +183,6 @@ function saveToggle() {
 ::v-deep(.custom-toggle-style) {
   --mdui-comp-ripple-state-layer-color: transparent !important;
 }
-
 
 ::v-deep(.custom-toggle-style .label-wrapper) {
   position: absolute;
