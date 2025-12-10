@@ -1,5 +1,7 @@
 <template>
-  <a :href="data.url" target="_blank">📎 {{ data.name }}</a>
+<mdui-button variant="text" :href="data.url" target="_blank" rel="noopener noreferrer" icon="attach_email">
+  {{ data.name }}
+</mdui-button>
 </template>
 
 <script setup>
