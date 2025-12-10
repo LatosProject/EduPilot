@@ -1,7 +1,7 @@
 <template>
   <!-- 页面整体横向布局 -->
   <div style="display: flex; height: 100vh;">
-    
+
     <!-- 左侧导航栏 -->
     <NavigationRail @menu-click="onMenuClick" />
 
@@ -14,18 +14,15 @@
       paddingBottom: '24px',
       transition: isInitial ? 'none' : 'padding-left 0.3s'
     }">
-      
+
       <!-- 左侧固定宽度区域 -->
       <div style="width: 480px; min-width: 480px;">
-        
+
         <!-- 顶部 Logo + 搜索框 -->
         <div style="display: flex; align-items: center; width: 100%;">
-          
+
           <!-- 左侧 Logo 区域（点击刷新首页） -->
-          <div
-            style="display: flex; align-items: center; cursor: pointer;"
-            @click="refreshHome"
-          >
+          <div style="display: flex; align-items: center; cursor: pointer;" @click="refreshHome">
             <img src="@/assets/logo.png" alt="logo" style="width: 32px; height: 32px;" />
             <span style="
               font-size: 21px;
@@ -42,50 +39,32 @@
           <div style="flex: 1;"></div>
 
           <!-- 右侧搜索框 -->
-          <SearchCard
-            @search="onSearchSelect"
-            :filter-status="currentStatus"
-            style="position: absolute; width: 720px; margin-right: 80px; height: 48px; margin-left: 185px; margin-top: 4px;"
-          />
+          <SearchCard @search="onSearchSelect" :filter-status="currentStatus"
+            style="position: absolute; width: 720px; margin-right: 80px; height: 48px; margin-left: 185px; margin-top: 4px;" />
         </div>
 
         <!-- 搜索框下方按钮组，绑定筛选事件 -->
-        <TaskButtonGroup
-          style="margin-bottom: 16px; margin-top:28px;"
-          @status-change="onStatusChange"
-        />
+        <TaskButtonGroup style="margin-bottom: 16px; margin-top:28px;" @status-change="onStatusChange" />
 
         <!-- 列表区域 -->
         <div style="position: relative;">
           <!-- 阴影，滚动时显示 -->
           <div class="top-shadow" v-show="showTopShadow"></div>
 
-          <OverlayScrollbarsComponent
-            ref="scrollbarRef"
-            :options="options"
-            style="height: calc(100vh - 144px); width: 100%;"
-          >
+          <OverlayScrollbarsComponent ref="scrollbarRef" :options="options"
+            style="height: calc(100vh - 144px); width: 100%;">
             <!-- 显示作业列表或空状态 -->
             <div v-if="assignments.length > 0">
               <div style="margin-left: 4px; margin-right: 4px; margin-top: 4px;">
-                <AssignmentCard
-                  style="margin-bottom: 16px"
-                  v-for="assignment in assignments"
-                  :key="assignment.uuid"
-                  :id="`assignment-${assignment.uuid}`"
-                  :title="assignment.title"
-                  @click="goDetail(assignment.uuid)"
-                  :deadline="formatDeadline(assignment.deadline)"
-                  :description="assignment.description"
-                  :selected="assignment.uuid === selectedId"
-                />
+                <AssignmentCard style="margin-bottom: 16px" v-for="assignment in assignments" :key="assignment.uuid"
+                  :id="`assignment-${assignment.uuid}`" :title="assignment.title" @click="goDetail(assignment.uuid)"
+                  :deadline="formatDeadline(assignment.deadline)" :description="assignment.description"
+                  :selected="assignment.uuid === selectedId" />
               </div>
             </div>
 
             <!-- 空状态提示 -->
-            <div
-              v-else
-              style="
+            <div v-else style="
                 height: calc(100vh - 176px);
                 display: flex;
                 align-items: center;
@@ -96,8 +75,7 @@
                 line-height: var(--mdui-typescale-headline-small-line-height);
                 letter-spacing: var(--mdui-typescale-headline-small-tracking);
                 color: var(--mdui-color-on-surface-variant);
-              "
-            >
+              ">
               尚无作业
             </div>
           </OverlayScrollbarsComponent>
@@ -106,8 +84,7 @@
       </div>
 
       <!-- 主体内容卡片容器 -->
-      <div
-        style="
+      <div style="
           position: relative;
           min-width: 480px;
           flex-grow: 1;
@@ -117,49 +94,28 @@
           background-color: rgb(var(--mdui-color-surface-container-lowest));
           box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.20);
           border-radius: var(--mdui-shape-corner-extra-large);
-        "
-      >
+        ">
 
         <!-- 顶部工具栏 -->
         <div style="display: flex; align-items: center; height: 56px;">
           <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
-            <mdui-button-icon
-              v-if="currentAssignment"
-              icon="share--outlined"
-              @click="openShareQRDialog"
-            ></mdui-button-icon>
-            <mdui-button-icon
-              v-if="currentAssignment"
-              icon="question_answer--outlined"
-            ></mdui-button-icon>
-            <mdui-button-icon
-              style="margin-right: 16px"
-              icon="dark_mode--outlined"
-              @click="toggleTheme"
-            ></mdui-button-icon>
+            <mdui-button-icon v-if="currentAssignment" icon="share--outlined"
+              @click="openShareQRDialog"></mdui-button-icon>
+            <mdui-button-icon v-if="currentAssignment" icon="question_answer--outlined"></mdui-button-icon>
+            <mdui-button-icon style="margin-right: 16px" icon="dark_mode--outlined"
+              @click="toggleTheme"></mdui-button-icon>
           </div>
         </div>
 
         <!-- 空状态动画 -->
-        <div
-          v-if="!currentAssignment"
-          style="height: calc(100vh - 168px); display: flex; align-items: center; justify-content: center;"
-        >
-          <LottieAnimation
-            :animation-data="animationData"
-            :loop="true"
-            :autoplay="true"
-            :width="250"
-            :height="250"
-          />
+        <div v-if="!currentAssignment"
+          style="height: calc(100vh - 168px); display: flex; align-items: center; justify-content: center;">
+          <LottieAnimation :animation-data="animationData" :loop="true" :autoplay="true" :width="250" :height="250" />
         </div>
 
         <!-- 内容滚动区域 -->
-        <OverlayScrollbarsComponent
-          :options="options"
-          v-if="currentAssignment"
-          style="flex: 1; width: 100%;"
-        >
+        <OverlayScrollbarsComponent :options="options" v-if="currentAssignment"
+          style="height: calc(100vh - 230px); width: 100%;">
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px;">
             <h1>{{ currentAssignment.title }}</h1>
             <h3>
@@ -168,21 +124,23 @@
                 创建人: {{ currentAssignment.created_by }}
               </small>
             </h3>
-            <p>{{ currentAssignment.content }}</p>
+
+
+            <!-- 动态渲染作业内容 -->
+            <component v-for="(block, i) in parsedContent" :key="i" :is="resolveBlock(block.type)" :data="block" />
+
           </div>
         </OverlayScrollbarsComponent>
 
+
         <!-- 底部操作按钮 -->
-        <div
-          v-if="currentAssignment"
-          style="
+        <div v-if="currentAssignment" style="
             position: absolute;
             bottom: 16px;
             right: 16px;
             display: flex;
             gap: 8px;
-          "
-        >
+          ">
           <mdui-button class="on-surface-variant" variant="outlined" icon="delete">
             忽略
           </mdui-button>
@@ -192,22 +150,16 @@
         </div>
 
         <!-- 分享二维码弹窗 -->
-<mdui-dialog ref="shareQRDialog" class="shareQRDialog" close-on-overlay-click close-on-esc>
-  <div 
-    style="
+        <mdui-dialog ref="shareQRDialog" class="shareQRDialog" close-on-overlay-click close-on-esc>
+          <div style="
       max-width: 320px; 
       max-height: 320px; 
       overflow: hidden; 
       border-radius: 16px;
-    "
-  >
-    <vue-qr 
-      :text="currentUrl" 
-      :size="320" 
-      style="border-radius: 16px;"  
-    />
-  </div>
-</mdui-dialog>
+    ">
+            <vue-qr :text="currentUrl" :size="320" style="border-radius: 16px;" />
+          </div>
+        </mdui-dialog>
 
       </div>
     </div>
@@ -232,6 +184,10 @@ import { getAssignments } from '../api/assignment'
 import { getClass } from '../api/classes'
 import animationData from "../assets/empty.json"
 import vueQr from 'vue-qr/src/packages/vue-qr.vue'
+import TextBlock from "@/components/blocks/TextBlock.vue";
+import ListBlock from "@/components/blocks/ListBlock.vue";
+import AttachmentBlock from "@/components/blocks/AttachmentBlock.vue";
+import TipBlock from "@/components/blocks/TipBlock.vue";
 
 const globalStore = useGlobalStore()
 
@@ -249,6 +205,17 @@ const shareQRDialog = ref(null)
 // props
 defineProps({
   filterStatus: String
+})
+
+// 解析 content 字符串为数组
+const parsedContent = computed(() => {
+  if (!currentAssignment.value.content) return []
+  try {
+    return JSON.parse(currentAssignment.value.content)
+  } catch (e) {
+    console.error('解析作业内容失败', e)
+    return []
+  }
 })
 
 // 当前作业链接，用于生成二维码
@@ -391,6 +358,16 @@ onBeforeUnmount(() => {
 onUnmounted(() => {
   clearInterval(intervalId)
 })
+
+function resolveBlock(type) {
+  return {
+    text: TextBlock,
+    list: ListBlock,
+    attachment: AttachmentBlock,
+    tip: TipBlock,
+  }[type];
+}
+
 </script>
 
 <style>

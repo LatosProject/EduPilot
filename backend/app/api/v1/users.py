@@ -12,7 +12,6 @@ from schemas.Response import (
     ErrorResponse,
     PageData,
     Pagination,
-    UpdateUserData,
 )
 from schemas.Request import RegisterRequest, UpdateUserRequest
 from schemas.User import User, UserProfile

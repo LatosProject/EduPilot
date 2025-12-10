@@ -1,10 +1,7 @@
 <template>
   <div style="position: relative; width: 100%;">
     <!-- 搜索卡片 -->
-    <mdui-card
-      ref="cardRef"
-      :class="{ 'card-focused': isEditing }"
-      style="
+    <mdui-card ref="cardRef" :class="{ 'card-focused': isEditing }" style="
         cursor: text;
         border-radius: var(--mdui-shape-corner-extra-large);
         height: 48px;
@@ -13,26 +10,17 @@
         padding: 0;
         gap: 0;
         background-color: rgb(var(--mdui-color-surface-container-high));
-      "
-      @click="startEditing"
-    >
+      " @click="startEditing">
       <!-- 搜索图标 -->
-      <mdui-icon
-        name="search"
-        style="
+      <mdui-icon name="search" style="
           font-size: 24px;
           color: rgb(var(--mdui-color-on-surface-variant));
           user-select: none;
           margin: 0 16px;
-        "
-      ></mdui-icon>
+        "></mdui-icon>
 
       <!-- 输入框 -->
-      <input
-        ref="searchInput"
-        v-model="keyword"
-        placeholder="搜索"
-        style="
+      <input ref="searchInput" v-model="keyword" placeholder="搜索" style="
           flex: 1;
           font-size: 16px;
           line-height: 56px;
@@ -45,37 +33,24 @@
           background: transparent;
           padding: 0;
           margin: 0;
-        "
-        @focus="isEditing = true"
-        @blur="onBlur"
-        @input="onInput"
-        @keydown="onKeydown"
-        @keydown.enter.prevent="emitSearch"
-      />
+        " @focus="isEditing = true" @blur="onBlur" @input="onInput" @keydown="onKeydown"
+        @keydown.enter.prevent="emitSearch" />
 
       <!-- 用户头像 -->
       <template v-if="user && user.avatar_url">
         <mdui-button-icon style="margin-left: auto; margin-right: 8px">
-          <img
-            :src="user.avatar_url"
-            style="background-color: rgb(var(--mdui-color-primary-container))"
-            alt="avatar"
-          />
+          <img :src="user.avatar_url" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
+            alt="avatar" />
         </mdui-button-icon>
+
       </template>
       <template v-else>
-        <mdui-button-icon
-          icon="account_circle"
-          style="margin-left: auto; margin-right: 8px"
-        ></mdui-button-icon>
+        <mdui-button-icon icon="account_circle" style="margin-left: auto; margin-right: 8px"></mdui-button-icon>
       </template>
     </mdui-card>
 
     <!-- 下拉建议框 -->
-    <div
-      v-if="showSuggestions"
-      ref="suggestionBox"
-      style="
+    <div v-if="showSuggestions" ref="suggestionBox" style="
         position: absolute;
         top: 60px;
         left: 0;
@@ -86,42 +61,30 @@
         z-index: 1000;
         overflow: auto;
         max-height: 300px;
-      "
-    >
+      ">
       <!-- 有搜索结果 -->
       <template v-if="suggestions.length > 0">
-        <div
-          v-for="(item, index) in suggestions"
-          :key="index"
-          @mousedown.prevent="selectSuggestion(item)"
-          @mouseenter="hoverIndex = index"
-          :style="{
+        <div v-for="(item, index) in suggestions" :key="index" @mousedown.prevent="selectSuggestion(item)"
+          @mouseenter="hoverIndex = index" :style="{
             backgroundColor:
               hoverIndex === index
                 ? 'rgb(var(--mdui-color-surface-container-highest))'
                 : 'transparent',
             padding: '10px 16px',
             cursor: 'pointer',
-          }"
-          :ref="hoverIndex === index ? 'hoveredItem' : null"
-        >
+          }" :ref="hoverIndex === index ? 'hoveredItem' : null">
           <div style="display: flex; flex-direction: column; gap: 4px;">
-            <span
-              style="
+            <span style="
                 font-size: 15px;
                 font-weight: 500;
                 color: rgb(var(--mdui-color-on-surface));
-              "
-              >{{ item.title }}</span
-            >
-            <div
-              style="
+              ">{{ item.title }}</span>
+            <div style="
                 display: flex;
                 gap: 12px;
                 font-size: 13px;
                 color: rgb(var(--mdui-color-on-surface-variant));
-              "
-            >
+              ">
               <span>创建者: {{ item.created_by || '未知' }}</span>
               <span>截止: {{ item.dueDate || '暂无' }}</span>
             </div>
@@ -131,12 +94,10 @@
 
       <!-- 无搜索结果 -->
       <template v-else>
-        <div
-          style="
+        <div style="
             padding: 10px 16px;
             color: rgb(var(--mdui-color-on-surface-variant));
-          "
-        >
+          ">
           未找到相关作业
         </div>
       </template>
