@@ -16,7 +16,11 @@
       }"
     >
       <!-- 左侧固定宽度区域 -->
-      <div class="left-panel" :class="{ 'full-width': windowWidth <= 1000 }" style="min-width: 480px">
+      <div
+        class="left-panel"
+        :class="{ 'full-width': windowWidth <= 1000 }"
+        style="min-width: 480px"
+      >
         <!-- 顶部 Logo + 搜索框 -->
         <div style="display: flex; align-items: center; width: 100%">
           <!-- 左侧 Logo 区域（点击刷新首页） -->
@@ -46,7 +50,8 @@
           <div style="flex: 1"></div>
 
           <!-- 右侧搜索框 -->
-          <SearchCard v-if="windowWidth > 1000"
+          <SearchCard
+            v-if="windowWidth > 1000"
             @search="onSearchSelect"
             :filter-status="currentStatus"
             style="
@@ -59,9 +64,21 @@
             "
           />
           <!-- 小屏搜索按钮 -->
-<div v-else style="margin-left: auto; margin-right: 16px; margin-top: 16px; position: absolute; margin-left: 764px;">
-  <mdui-button-icon icon="search--outlined" @click="showMobileSearch = true" />
-</div>
+          <div
+            v-else
+            style="
+              display: flex;
+              align-items: center;
+              margin-left: auto;
+              margin-right: 16px;
+              transform: translateY(4px);
+            "
+          >
+            <mdui-button-icon
+              icon="search--outlined"
+              @click="showMobileSearch = true"
+            />
+          </div>
         </div>
         <!-- 搜索框下方按钮组，绑定筛选事件 -->
         <TaskButtonGroup
@@ -514,11 +531,9 @@ function resolveBlock(type) {
 
 .left-panel.full-width {
   flex-grow: 1; /* 当窗口小于1000px时，撑满 */
-  min-width: 0;  /* 避免 min-width 限制动画 */
+  min-width: 0; /* 避免 min-width 限制动画 */
   padding-right: 16px;
 }
-
-
 
 .right-panel {
   flex-grow: 1;
