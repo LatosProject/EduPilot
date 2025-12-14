@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Field, HttpUrl
 from schemas.User import UserProfile
 
@@ -26,6 +26,7 @@ class CreateClassRequest(BaseModel):
 class Attachment(BaseModel):
     filename: str
     url: HttpUrl
+    
 
 
 class CreateAssignmentRequest(BaseModel):
@@ -38,6 +39,9 @@ class CreateAssignmentRequest(BaseModel):
     allow_late_submission: bool
     attachments: List[Attachment]
 
+class SubmitAssignmetRequest(BaseModel):
+    content: str
+    attachments: Optional[List[Attachment]] = None
 
 class JoinClassRequest(BaseModel):
     invite_code: str

@@ -14,6 +14,7 @@ from schemas.Request import (
     CreateClassRequest,
     JoinClassRequest,
     UpdateClassRequest,
+    SubmitAssignmetRequest
 )
 from schemas.Response import (
     ApiResponse,
@@ -34,6 +35,7 @@ from services.classes import (
     get_classes,
     join_class,
     update_class,
+    submit_assignment
 )
 
 router = APIRouter(prefix="/classes", tags=["Classes"])
@@ -345,7 +347,6 @@ async def get_class_route(
     return to_response(data=ClassData.model_validate(class_obj))
 
 
-# TO-DO
 @router.get("", response_model=Union[ApiResponse, ErrorResponse])
 async def get_classes_route(
     page: int = 1,
@@ -359,6 +360,36 @@ async def get_classes_route(
     ),
     current_user: User = Depends(get_current_user),
 ):
+    """
+    获取班级列表接口，支持分页、筛选、搜索与排序。
+
+    主要流程：
+    1. 接收分页参数（page、size），用于控制返回的数据量。
+    2. 接收可选筛选条件：
+       - `status`: 按班级状态过滤（如 active、closed 等）。
+       - `search`: 文本搜索关键词。
+    3. 接收排序参数 `order_by` 与 `order`，用于指定排序字段与方向。
+    4. 从依赖注入中获取数据库异步会话（db）及当前登录用户（current_user）。
+    5. 调用 `get_classes` 业务逻辑函数，传入用户 UUID、权限角色等参数执行查询。
+       - 返回值为 `(items, total)`：班级列表与总记录数。
+    6. 基于总数与分页大小计算总页数。
+    7. 使用 `ClassData.model_validate` 对查询结果进行结构化与验证。
+    8. 调用 `to_response` 返回标准化响应结果，包含列表与分页信息。
+
+    参数：
+        page (int): 页码，默认第 1 页。
+        size (int): 每页数据量，默认 10 条。
+        status (str): 可选状态过滤字段。
+        search (str): 搜索关键字。
+        order_by (str): 排序字段，默认按创建时间排序。
+        order (str): 排序方向（asc/desc），默认降序。
+        db (AsyncSession): 数据库异步会话。
+        current_user (User): 当前认证用户对象。
+
+    返回：
+        ApiResponse: 成功返回班级列表与分页数据。
+        ErrorResponse: 若参数错误或权限不足则返回错误信息。
+    """
     items, total = await get_classes(
         db,
         current_user.uuid,
@@ -370,10 +401,52 @@ async def get_classes_route(
         order,
         current_user.role,
     )
+
     pages = (total + size - 1) // size
+
     return to_response(
         data=PageData(
             items=[ClassData.model_validate(item) for item in items],
             pagination=Pagination(page=page, size=size, total=total, pages=pages),
         )
     )
+
+
+#TO-DO
+@router.post(
+    "/{class_uuid}/{assignment_uuid}/submissions",
+    response_model=Union[ApiResponse, ErrorResponse],
+)
+async def submit_assignment_route(
+    class_uuid:str,
+    assignment_uuid:str,
+    form_data: SubmitAssignmetRequest,
+    db: AsyncSession = Depends(DatabaseConnector.get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    提交班级作业接口。
+
+    主要流程：
+    1. 获取当前用户信息。
+    2. 调用 submit_assignment 完成作业提交。
+    3. 返回成功响应。
+
+    参数：
+        class_uuid (str): 作业所属班级 UUID。
+        assignment_uuid (str): 作业 UUID。
+        form_data (SubmitAssignmetRequest): 请求体，包含作业内容及附件。
+        db (AsyncSession, optional): 数据库会话，默认通过 Depends 注入。
+        current_user (User, optional): 当前用户对象，默认通过 Depends 注入。
+
+    返回：
+        ApiResponse: 提交成功返回消息。
+        ErrorResponse: 提交失败返回错误信息。
+
+    异常：
+        - AlreadyExists: 用户重复提交作业时抛出。
+        - InvalidParameter: 数据库写入失败或参数非法时抛出。
+        - NotExists: 作业不存在或用户不属于班级时抛出。
+    """
+    await submit_assignment(db,current_user.uuid,class_uuid,assignment_uuid,form_data.content,form_data.attachments)
+    return to_response(message="Assignment submitted successfully")

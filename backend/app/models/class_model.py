@@ -102,3 +102,25 @@ class ClassMemberModel(Base):
     )
     class_ = relationship("ClassModel", back_populates="members")
     user = relationship("User", back_populates="class_members")
+
+class AssignmentSubmissionModel(Base):
+    __tablename__ = "assignments_submissions"
+    id = Column(Integer, primary_key=True, autoincrement=True, comment="主键ID")
+    assignment_uuid = Column(
+        String(36),
+        ForeignKey("assignments.uuid", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="作业提交 UUID",
+    )
+
+    user_uuid = Column(
+        String(36),
+        ForeignKey("users.uuid", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="学生 UUID",
+    )
+
+    content = Column(Text, nullable=False, comment="提交内容")
+    attachments = Column(JSON, nullable=True, comment="附件列表（JSON数组）")

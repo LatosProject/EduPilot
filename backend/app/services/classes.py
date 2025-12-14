@@ -9,9 +9,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core import exceptions
-from models.class_model import AssignmentModel, ClassMemberModel, ClassModel
+from models.class_model import (
+    AssignmentModel,
+    ClassMemberModel,
+    ClassModel,
+    AssignmentSubmissionModel,
+)
 from models.user import User
-from schemas.Response import ClassUserData
+from schemas.Response import ClassUserData, Attachment
 from utils import random
 
 logger = logging.getLogger("services.classes")
@@ -121,8 +126,8 @@ async def create_assignment(
     deadline: str,
     max_score: int,
     allow_late_submission: bool,
-    attachments: list[str],
     created_by: str,
+    attachments: list[Attachment] | None = None,
 ):
     """
     创建新的作业记录，并保存到数据库。
@@ -157,9 +162,11 @@ async def create_assignment(
         - 数据提交前已通过 get_class_by_uuid 验证班级存在性，避免外键错误。
         - 所有数据库操作失败均会自动 rollback，确保数据一致性。
     """
-    attachments = json.dumps(
-        [{**a.dict(), "url": str(a.url)} for a in attachments], separators=(",", ":")
+    attachments_json = json.dumps(
+        [{**a.dict(), "url": str(a.url)} for a in attachments] if attachments else [],
+        separators=(",", ":"),
     )
+
     await get_class_by_uuid(db, class_uuid)
     new_assignment = AssignmentModel(
         uuid=random.generate_uuid(),
@@ -171,7 +178,7 @@ async def create_assignment(
         deadline=deadline,
         max_score=max_score,
         allow_late_submission=allow_late_submission,
-        attachments=attachments,
+        attachments=attachments_json,
         submission_count=0,
         updated_at=datetime.now(timezone.utc),
         created_by=created_by,
@@ -703,3 +710,76 @@ async def get_classes(
         )
     total = (await db.execute(count_stmt)).scalar_one()
     return items, total
+
+
+async def submit_assignment(
+    db: AsyncSession,
+    user_uuid: str,
+    class_uuid: str,
+    assignment_uuid: str,
+    content: str,
+    attachments: list[Attachment] | None = None,
+):
+    """
+    提交作业到数据库。
+
+    主要流程：
+    1. 校验作业是否存在，并检查用户是否属于班级（无权限将抛出异常）。
+    2. 处理附件列表，将 Pydantic Attachment 对象序列化为 JSON 字符串，HttpUrl 转为 str。
+    3. 构建 AssignmentSubmissionModel 对象并添加到数据库。
+    4. 提交事务并刷新对象，返回新提交记录。
+    5. 捕获 IntegrityError 处理重复提交，捕获其他异常记录日志并抛 InvalidParameter。
+
+    参数：
+        db (AsyncSession): 异步数据库会话。
+        user_uuid (str): 提交作业的用户 UUID。
+        class_uuid (str): 作业所属班级 UUID。
+        assignment_uuid (str): 作业 UUID。
+        content (str): 作业内容。
+        attachments (list[Attachment] | None): 附件列表，可为空。
+
+    返回：
+        AssignmentSubmissionModel: 成功提交的作业记录。
+
+    异常：
+        - AlreadyExists: 用户重复提交作业时抛出。
+        - InvalidParameter: 数据库写入失败或参数非法时抛出。
+    """
+    await get_assignment(db, assignment_uuid, class_uuid, user_uuid)
+    if attachments:
+        attachments_json = json.dumps(
+            (
+                [
+                    {**a.model_dump(), "url": str(a.url)}  # 关键：转成 str
+                    for a in attachments
+                ]
+                if attachments
+                else []
+            ),
+            separators=(",", ":"),
+            ensure_ascii=False,
+        )
+    else:
+        attachments_json = "[]"
+
+    new_assignment = AssignmentSubmissionModel(
+        user_uuid=user_uuid,
+        assignment_uuid=assignment_uuid,
+        content=content,
+        attachments=attachments_json,
+    )
+    try:
+        logger.info(
+            "尝试添加提交的新作业到数据库: 新提交的作业UUID: %s", assignment_uuid
+        )
+        db.add(new_assignment)
+        await db.commit()
+        await db.refresh(new_assignment)
+        return new_assignment
+    except IntegrityError as e:
+        await db.rollback()
+        if "UNIQUE constraint failed" in str(e.orig):
+            raise exceptions.AlreadyExists()
+    except Exception as e:
+        logger.error("添加新提交的作业到数据库失败, 错误: %s", e)
+        raise exceptions.InvalidParameter()

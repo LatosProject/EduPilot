@@ -136,6 +136,21 @@ async def verify_token_route(current_user: User = Depends(get_current_user)):
 
 @router.post("/logout", response_model=Union[ApiResponse, ErrorResponse])
 async def logout_route():
-    response= to_response()
+    """
+    登出接口，用于清除客户端的刷新令牌 Cookie。
+
+    主要流程：
+    1. 调用 `to_response()` 构建标准化响应对象。
+    2. 使用 `response.delete_cookie` 删除浏览器中存储的 refresh_token Cookie。
+       - Cookie 键为 `refresh_token`
+       - Cookie 所在路径为 `/api/v1/auth/refresh`
+       - 删除后客户端将无法再通过 refresh_token 刷新访问令牌。
+    3. 返回构建完成的响应对象，完成登出流程。
+
+    返回：
+        ApiResponse: 登出成功时返回空数据结构的标准响应。
+        ErrorResponse: 若发生异常则返回对应的错误响应（通常不会在本接口中出现）。
+    """
+    response = to_response()
     response.delete_cookie(key="refresh_token", path="/api/v1/auth/refresh")
     return response

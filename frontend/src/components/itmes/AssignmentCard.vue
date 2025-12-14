@@ -85,7 +85,7 @@ const props = defineProps({
 <style scoped>
 .card-default {
   border-radius: var(--mdui-shape-corner-medium);
-  height: 200px;
+  height: 128px;
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -103,7 +103,7 @@ const props = defineProps({
 
 .card-selected {
   border-radius: var(--mdui-shape-corner-medium);
-  height: 200px;
+  height: 128px;
   display: flex;
   flex-direction: column;
   padding: 0;
