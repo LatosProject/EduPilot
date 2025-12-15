@@ -163,7 +163,7 @@
           >
             <mdui-button-icon
               v-if="currentAssignment"
-              icon="share--outlined"
+              icon="phonelink--outlined"
               @click="openShareQRDialog"
             ></mdui-button-icon>
             <mdui-button-icon
