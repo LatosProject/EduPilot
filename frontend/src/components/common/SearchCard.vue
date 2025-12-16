@@ -35,18 +35,6 @@
           margin: 0;
         " @focus="isEditing = true" @blur="onBlur" @input="onInput" @keydown="onKeydown"
         @keydown.enter.prevent="emitSearch" />
-
-      <!-- 用户头像 -->
-      <template v-if="user && user.avatar_url">
-        <mdui-button-icon style="margin-left: auto; margin-right: 8px">
-          <img :src="user.avatar_url" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
-            alt="avatar" />
-        </mdui-button-icon>
-
-      </template>
-      <template v-else>
-        <mdui-button-icon icon="account_circle" style="margin-left: auto; margin-right: 8px"></mdui-button-icon>
-      </template>
     </mdui-card>
 
     <!-- 下拉建议框 -->

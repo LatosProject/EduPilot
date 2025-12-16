@@ -79,6 +79,77 @@
               @click="showMobileSearch = true"
             />
           </div>
+
+          <!-- 用户头像 -->
+          <template v-if="user && user.avatar_url">
+            <mdui-button-icon
+              ref="avatarRef"
+              style="position: absolute; right: 24px; margin-bottom: -4px"
+              @click.stop="onAvatarClick"
+            >
+              <img
+                :src="user.avatar_url"
+                style="
+                  width: 40px;
+                  height: 40px;
+                  object-fit: cover;
+                  border-radius: 50%;
+                "
+                alt="avatar"
+              />
+            </mdui-button-icon>
+
+            <Teleport to="body">
+              <div
+                class="profile-popover"
+                :style="popoverStyle"
+                ref="popoverRef"
+                v-show="visible"
+                @click.stop
+              >
+                <div
+                  class="user-gmail"
+                  style="
+                    font-size: var(--mdui-typescale-title-small-size);
+                    line-height: var(--mdui-typescale-title-small-height);
+                    font-weight: var(--mdui-typescal-title-small-weight);
+                  "
+                >
+                  {{ user.email }}
+                </div>
+              
+                <div class="popover-avatar">
+                  <img
+                    :src="user.avatar_url"
+                    alt="avatar"
+                    class="popover-avatar-img"
+                  />
+                </div>
+                <div
+                  class="user-welcome"
+                  style="
+                    font-size: var(--mdui-typescale-title-large-size);
+                    line-height: var(--mdui-typescale-title-large-height);
+                    font-weight: var(--mdui-typescal-title-large-weight);
+                  "
+                >{{user.username}}, 您好!</div>
+                <div class="popover-btn">
+                  <mdui-button variant="outlined">
+                    设置您的 EduPilot账户
+                  </mdui-button>
+                </div>
+                <div class="popover-btn">
+                  <mdui-button variant="filled"> 退出登录 </mdui-button>
+                </div>
+              </div>
+            </Teleport>
+          </template>
+          <template v-else>
+            <mdui-button-icon
+              icon="account_circle"
+              style="margin-left: auto; margin-right: 8px"
+            ></mdui-button-icon>
+          </template>
         </div>
         <!-- 搜索框下方按钮组，绑定筛选事件 -->
         <TaskButtonGroup
@@ -303,6 +374,9 @@ import TextBlock from "@/components/blocks/TextBlock.vue";
 import ListBlock from "@/components/blocks/ListBlock.vue";
 import AttachmentBlock from "@/components/blocks/AttachmentBlock.vue";
 import TipBlock from "@/components/blocks/TipBlock.vue";
+import { getProfile } from "../api/auth";
+const visible = ref(false);
+const popoverStyle = ref({ top: "0px", left: "0px", position: "absolute" });
 
 const globalStore = useGlobalStore();
 
@@ -323,6 +397,7 @@ const scrollbarRef = ref(null);
 const isInitial = ref(true);
 const shareQRDialog = ref(null);
 const windowWidth = ref(window.innerWidth);
+const user = ref(null);
 
 function updateWidth() {
   windowWidth.value = window.innerWidth;
@@ -353,6 +428,24 @@ const currentUrl = computed(() => {
 function refreshHome() {
   window.location.href = "/";
 }
+const avatarRef = ref(null);
+const popoverRef = ref(null);
+
+function onAvatarClick() {
+  visible.value = !visible.value;
+  nextTick(updatePopoverPosition); // DOM 更新后计算位置
+}
+const onClickOutside = (e) => {
+  if (
+    visible.value &&
+    popoverRef.value &&
+    !popoverRef.value.contains(e.target) &&
+    avatarRef.value &&
+    !avatarRef.value.contains(e.target)
+  ) {
+    visible.value = false;
+  }
+};
 
 // OverlayScrollbars 配置
 const options = ref({
@@ -395,8 +488,29 @@ function onMenuClick() {
 }
 
 // 页面挂载后允许动画
-onMounted(() => {
+onMounted(async () => {
+  window.addEventListener("resize", updatePopoverPosition);
+  window.addEventListener("scroll", updatePopoverPosition, true); // 捕获滚动事件
+  document.addEventListener("click", onClickOutside);
+  try {
+    const res = await getProfile();
+    user.value = res.data.data;
+  } catch {
+    user.value = null;
+  }
+
   isInitial.value = false;
+});
+onMounted(() => {
+  window.addEventListener("resize", updatePopoverPosition);
+  window.addEventListener("scroll", updatePopoverPosition, true); // 捕获滚动事件
+  document.addEventListener("click", onClickOutside);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", updatePopoverPosition);
+  window.removeEventListener("scroll", updatePopoverPosition, true);
+  document.removeEventListener("click", onClickOutside);
 });
 
 // 切换主题
@@ -497,6 +611,9 @@ onBeforeUnmount(() => {
 onUnmounted(() => {
   clearInterval(intervalId);
   window.removeEventListener("resize", updateWidth);
+  document.removeEventListener("click", onClickOutside);
+  window.removeEventListener("resize", updatePopoverPosition);
+  window.removeEventListener("scroll", updatePopoverPosition, true);
 });
 
 function resolveBlock(type) {
@@ -506,6 +623,16 @@ function resolveBlock(type) {
     attachment: AttachmentBlock,
     tip: TipBlock,
   }[type];
+}
+
+function updatePopoverPosition() {
+  if (!avatarRef.value || !visible.value) return;
+  const rect = avatarRef.value.getBoundingClientRect();
+  popoverStyle.value = {
+    top: rect.bottom + window.scrollY + 12 + "px", // 头像下方 8px
+    left: rect.left + window.scrollX + -360 + "px",
+    position: "absolute",
+  };
 }
 </script>
 
@@ -537,5 +664,84 @@ function resolveBlock(type) {
 
 .right-panel {
   flex-grow: 1;
+}
+
+header {
+  position: relative;
+  padding: 16px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.profile-popover {
+  position: absolute; /* 必须有 */
+  width: 400px;
+  background: rgb(var(--mdui-color-surface-container-high));
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  z-index: 1000;
+}
+
+.item {
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: #f5f5f5;
+}
+
+.divider {
+  height: 1px;
+  background: #eee;
+  margin: 6px 0;
+}
+
+.danger {
+  color: #d93025;
+}
+
+.profile-popover .user-gmail {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 12px;
+  text-align: center;
+}
+
+.profile-popover .user-welcome {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 4px;      
+  padding-bottom: 2px; 
+  padding-left: 12px;
+  padding-right: 12px;
+  text-align: center;
+}
+
+.popover-btn {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px;
+}
+
+.popover-avatar {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 4px;
+}
+
+.popover-avatar-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 </style>
