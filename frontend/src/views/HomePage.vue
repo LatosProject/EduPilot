@@ -80,7 +80,6 @@
             />
           </div>
 
-
           <!-- 用户头像 -->
           <template v-if="user && user.avatar_url">
             <mdui-button-icon
@@ -158,23 +157,20 @@
                 </div>
               </div>
             </Teleport>
-             <Teleport v-if="windowWidth < 1000" to="body">
-  <div
-    v-show="showMobileSearch"
-    class="mobile-search-mask"
-    @click="showMobileSearch = false"
-  >
-    <div
-      class="mobile-search-wrapper"
-      @click.stop
-    >
-      <SearchCard
-        @search="onSearchSelect"
-        :filter-status="currentStatus"
-      />
-    </div>
-  </div>
-</Teleport>
+            <Teleport v-if="windowWidth < 1000" to="body">
+              <div
+                v-show="showMobileSearch"
+                class="mobile-search-mask"
+                @click="showMobileSearch = false"
+              >
+                <div class="mobile-search-wrapper" @click.stop>
+                  <SearchCard
+                    @search="onSearchSelect"
+                    :filter-status="currentStatus"
+                  />
+                </div>
+              </div>
+            </Teleport>
           </template>
           <template v-else>
             <mdui-button-icon
@@ -255,7 +251,10 @@
         v-if="windowWidth > 1000"
       >
         <!-- 顶部工具栏 -->
-        <div style="display: flex; align-items: center; height: 56px">
+        <div
+          v-if="currentAssignment && showHeaderAndFooter"
+          style="display: flex; align-items: center; height: 56px"
+        >
           <div
             style="
               margin-left: auto;
@@ -307,34 +306,43 @@
           style="height: calc(100vh - 230px); width: 100%"
         >
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px">
-            <h1>{{ currentAssignment.title }}</h1>
-            <h3>
-              <small>
-                创建日期:
-                {{ formatDeadline(currentAssignment.created_at) }} 创建人:
-                {{ currentAssignment.created_by }}
-              </small>
-            </h3>
-
+            <div v-if="currentAssignment && showHeaderAndFooter">
+              <h1>{{ currentAssignment.title }}</h1>
+              <h3>
+                <small>
+                  创建日期:
+                  {{ formatDeadline(currentAssignment.created_at) }} 创建人:
+                  {{ currentAssignment.created_by }}
+                </small>
+              </h3>
+            </div>
             <!-- 动态渲染作业内容 -->
-            <component
-              v-for="(block, i) in parsedContent"
-              :key="i"
-              :is="resolveBlock(block.type)"
-              :data="block"
-            />
+            <template v-if="isDynamicPageRef">
+              <component
+                v-for="(block, i) in parsedContent"
+                :key="i"
+                :is="resolveBlock(block.type)"
+                :data="block"
+              />
+            </template>
+
+            <!-- 如果是 Card 组件 -->
+            <template v-else>
+              <SubmissionCard @submit="handleSubmit" />
+            </template>
           </div>
         </OverlayScrollbarsComponent>
-
         <!-- 底部操作按钮 -->
+        <!-- 底部操作按钮，固定在右下 -->
         <div
-          v-if="currentAssignment"
+          v-if="currentAssignment && showHeaderAndFooter"
           style="
             position: absolute;
             bottom: 16px;
             right: 16px;
             display: flex;
             gap: 8px;
+            z-index: 50;
           "
         >
           <mdui-button
@@ -344,7 +352,11 @@
           >
             忽略
           </mdui-button>
-          <mdui-button variant="filled" end-icon="arrow_forward">
+          <mdui-button
+            @click="handleSubmit(currentAssignment.id)"
+            variant="filled"
+            end-icon="arrow_forward"
+          >
             提交
           </mdui-button>
         </div>
@@ -408,11 +420,11 @@ import AttachmentBlock from "@/components/blocks/AttachmentBlock.vue";
 import TipBlock from "@/components/blocks/TipBlock.vue";
 import { getProfile } from "../api/auth";
 import { logoutApi } from "../api/auth";
+import SubmissionCard from "../components/common/SubmissionCard.vue";
 const visible = ref(false);
 const popoverStyle = ref({ top: "0px", left: "0px", position: "absolute" });
 
-
-const showMobileSearch = ref(false)
+const showMobileSearch = ref(false);
 
 const globalStore = useGlobalStore();
 
@@ -435,15 +447,24 @@ const shareQRDialog = ref(null);
 const windowWidth = ref(window.innerWidth);
 const user = ref(null);
 const showAvatar = computed(() => windowWidth.value > 1000);
+const showHeaderAndFooter = ref(true);
 
 function updateWidth() {
   windowWidth.value = window.innerWidth;
 }
 
-// props
-defineProps({
+const props = defineProps({
   filterStatus: String,
+  isDynamicPage: { type: Boolean, default: true }, // 默认 true
 });
+
+const isDynamicPageRef = ref(props.isDynamicPage);
+
+function handleSubmit(id) {
+  // 切换渲染模式为 SubmissionCard
+  isDynamicPageRef.value = false;
+  showHeaderAndFooter.value = false;
+}
 
 // 解析 content 字符串为数组
 const parsedContent = computed(() => {
@@ -491,14 +512,13 @@ const options = ref({
 
 // 搜索选择事件
 function onSearchSelect(item) {
-  showMobileSearch.value = false; 
+  showMobileSearch.value = false;
   router.push({ name: "AssignmentDetail", params: { id: item.uuid } });
   nextTick(() => {
     const el = document.querySelector(`#assignment-${item.uuid}`);
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 }
-
 
 // 打开二维码分享弹窗
 function openShareQRDialog() {
@@ -511,7 +531,15 @@ function openShareQRDialog() {
 watch(
   () => route.params.id,
   (newId) => {
-    if (newId) selectedId.value = newId;
+    if (newId) {
+      selectedId.value = newId;
+
+      // 切换作业时恢复顶部和底部显示
+      showHeaderAndFooter.value = true;
+
+      // 动态渲染模式也恢复
+      isDynamicPageRef.value = true;
+    }
   }
 );
 
@@ -531,6 +559,8 @@ onMounted(async () => {
   window.addEventListener("resize", updatePopoverPosition);
   window.addEventListener("scroll", updatePopoverPosition, true); // 捕获滚动事件
   document.addEventListener("click", onClickOutside);
+
+  window.addEventListener("resize", updateWidth); // 页面宽度变化
   try {
     const res = await getProfile();
     user.value = res.data.data;
@@ -539,17 +569,6 @@ onMounted(async () => {
   }
 
   isInitial.value = false;
-});
-onMounted(() => {
-  window.addEventListener("resize", updatePopoverPosition);
-  window.addEventListener("scroll", updatePopoverPosition, true); // 捕获滚动事件
-  document.addEventListener("click", onClickOutside);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", updatePopoverPosition);
-  window.removeEventListener("scroll", updatePopoverPosition, true);
-  document.removeEventListener("click", onClickOutside);
 });
 
 // 切换主题
@@ -649,19 +668,21 @@ onBeforeUnmount(() => {
 
 onUnmounted(() => {
   clearInterval(intervalId);
+  // 清理 window 和 document 事件
   window.removeEventListener("resize", updateWidth);
-  document.removeEventListener("click", onClickOutside);
   window.removeEventListener("resize", updatePopoverPosition);
   window.removeEventListener("scroll", updatePopoverPosition, true);
+  document.removeEventListener("click", onClickOutside);
 });
 
 function resolveBlock(type) {
-  return {
+  const map = {
     text: TextBlock,
     list: ListBlock,
     attachment: AttachmentBlock,
     tip: TipBlock,
-  }[type];
+  };
+  return map[type] || UnknownBlock; // UnknownBlock 用于处理未知类型
 }
 
 // 登出逻辑
@@ -808,5 +829,4 @@ header {
   margin-top: 18px;
   padding: 0 16px;
 }
-
 </style>

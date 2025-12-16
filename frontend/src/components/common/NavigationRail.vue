@@ -24,7 +24,7 @@
       :extended="toggle"
       slot="top"
     >
-      编辑
+      笔记
     </mdui-fab>
 
     <!-- 导航项列表 -->
