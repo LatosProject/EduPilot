@@ -80,6 +80,7 @@
             />
           </div>
 
+
           <!-- 用户头像 -->
           <template v-if="user && user.avatar_url">
             <mdui-button-icon
@@ -157,6 +158,23 @@
                 </div>
               </div>
             </Teleport>
+             <Teleport v-if="windowWidth < 1000" to="body">
+  <div
+    v-show="showMobileSearch"
+    class="mobile-search-mask"
+    @click="showMobileSearch = false"
+  >
+    <div
+      class="mobile-search-wrapper"
+      @click.stop
+    >
+      <SearchCard
+        @search="onSearchSelect"
+        :filter-status="currentStatus"
+      />
+    </div>
+  </div>
+</Teleport>
           </template>
           <template v-else>
             <mdui-button-icon
@@ -393,6 +411,9 @@ import { logoutApi } from "../api/auth";
 const visible = ref(false);
 const popoverStyle = ref({ top: "0px", left: "0px", position: "absolute" });
 
+
+const showMobileSearch = ref(false)
+
 const globalStore = useGlobalStore();
 
 // 作业数据及状态管理
@@ -470,12 +491,14 @@ const options = ref({
 
 // 搜索选择事件
 function onSearchSelect(item) {
+  showMobileSearch.value = false; 
   router.push({ name: "AssignmentDetail", params: { id: item.uuid } });
   nextTick(() => {
     const el = document.querySelector(`#assignment-${item.uuid}`);
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 }
+
 
 // 打开二维码分享弹窗
 function openShareQRDialog() {
@@ -767,4 +790,23 @@ header {
   border-radius: 50%;
   object-fit: cover;
 }
+
+.mobile-search-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  z-index: 3000;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.mobile-search-wrapper {
+  width: 100%;
+  max-width: 1000px;
+  margin-top: 18px;
+  padding: 0 16px;
+}
+
 </style>
