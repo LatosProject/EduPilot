@@ -83,6 +83,7 @@
           <!-- 用户头像 -->
           <template v-if="user && user.avatar_url">
             <mdui-button-icon
+              v-if="showAvatar"
               ref="avatarRef"
               style="position: absolute; right: 24px; margin-bottom: -4px"
               @click.stop="onAvatarClick"
@@ -98,8 +99,7 @@
                 alt="avatar"
               />
             </mdui-button-icon>
-
-            <Teleport to="body">
+            <Teleport to="body" v-if="showAvatar">
               <div
                 class="profile-popover"
                 :style="popoverStyle"
@@ -117,7 +117,7 @@
                 >
                   {{ user.email }}
                 </div>
-              
+
                 <div class="popover-avatar">
                   <img
                     :src="user.avatar_url"
@@ -132,14 +132,28 @@
                     line-height: var(--mdui-typescale-title-large-height);
                     font-weight: var(--mdui-typescal-title-large-weight);
                   "
-                >{{user.username}}, 您好!</div>
+                >
+                  {{ user.username }}, 您好!
+                </div>
                 <div class="popover-btn">
-                  <mdui-button variant="outlined">
+                  <mdui-button
+                    variant="outlined"
+                    @click="router.push('/settings')"
+                  >
                     设置您的 EduPilot账户
                   </mdui-button>
                 </div>
                 <div class="popover-btn">
-                  <mdui-button variant="filled"> 退出登录 </mdui-button>
+                  <mdui-button
+                    @click="logout"
+                    variant="filled"
+                    style="
+                      color: rgb(var(--mdui-color-primary-light));
+                      background-color: transparent;
+                    "
+                  >
+                    退出登录
+                  </mdui-button>
                 </div>
               </div>
             </Teleport>
@@ -375,6 +389,7 @@ import ListBlock from "@/components/blocks/ListBlock.vue";
 import AttachmentBlock from "@/components/blocks/AttachmentBlock.vue";
 import TipBlock from "@/components/blocks/TipBlock.vue";
 import { getProfile } from "../api/auth";
+import { logoutApi } from "../api/auth";
 const visible = ref(false);
 const popoverStyle = ref({ top: "0px", left: "0px", position: "absolute" });
 
@@ -398,6 +413,7 @@ const isInitial = ref(true);
 const shareQRDialog = ref(null);
 const windowWidth = ref(window.innerWidth);
 const user = ref(null);
+const showAvatar = computed(() => windowWidth.value > 1000);
 
 function updateWidth() {
   windowWidth.value = window.innerWidth;
@@ -625,6 +641,13 @@ function resolveBlock(type) {
   }[type];
 }
 
+// 登出逻辑
+function logout() {
+  localStorage.removeItem("access_token");
+  router.replace({ name: "Login" });
+  logoutApi();
+}
+
 function updatePopoverPosition() {
   if (!avatarRef.value || !visible.value) return;
   const rect = avatarRef.value.getBoundingClientRect();
@@ -719,8 +742,8 @@ header {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-top: 4px;      
-  padding-bottom: 2px; 
+  padding-top: 4px;
+  padding-bottom: 2px;
   padding-left: 12px;
   padding-right: 12px;
   text-align: center;
