@@ -328,10 +328,66 @@
 
             <!-- 如果是 Card 组件 -->
             <template v-else>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  height: 56px;
+                  margin-top: -8px;
+                "
+              >
+                <div
+                  style="
+                    margin-left: auto;
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                  "
+                >
+                  <mdui-button-icon icon="upload_file" @click="triggerUpload" />
+                  <mdui-button-icon
+                    style="margin-right: 16px"
+                    icon="dark_mode--outlined"
+                    @click="toggleTheme"
+                  />
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 16px;
+                    right: 16px;
+                    display: flex;
+                    gap: 8px;
+                    z-index: 50;
+                  "
+                >
+                  <mdui-button
+                    @click="handleSubmit(currentAssignment.id)"
+                    variant="filled"
+                    end-icon="cloud_upload"
+                  >
+                    提交
+                  </mdui-button>
+                </div>
+              </div>
+              <!-- 顶部工具栏 -->
+              <div
+                style="display: flex; align-items: center; margin-bottom: 8px"
+              >
+                <!-- 上传按钮，调用 AttachmentUploader 内部方法 -->
+              </div>
+
+              <div>
+                <h1>提交作业</h1>
+              </div>
+              <div
+                style="display: flex; align-items: center; height: 56px"
+              ></div>
               <SubmissionCard @submit="handleSubmit" />
             </template>
           </div>
         </OverlayScrollbarsComponent>
+
         <!-- 底部操作按钮 -->
         <!-- 底部操作按钮，固定在右下 -->
         <div
