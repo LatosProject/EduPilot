@@ -1,35 +1,43 @@
 <template>
-
   <div class="submission-card">
-    <div style="height: calc(100vh - 344px);"
-      ref="editorRef"
-      class="editor"
-      contenteditable
-      @input="onInput"
-      @focus="onFocus"
-      @blur="onBlur"
-    ></div>
+    <!-- 编辑器外层滚动容器 -->
+    <OverlayScrollbarsComponent
+      ref="scrollRef"
+      :options="options"
+      class="editor-scroll"
+    >
+      <div
+        ref="editorRef"
+        class="editor"
+        contenteditable
+        @input="onInput"
+        @focus="onFocus"
+        @blur="onBlur"
+      ></div>
+    </OverlayScrollbarsComponent>
 
-    <div v-if="showHint" class="placeholder">
-      轻触以编辑……
-    </div>
+    <!-- 占位提示 -->
+    <div v-if="showHint" class="placeholder">轻触以编辑……</div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, onMounted } from "vue";
+import { OverlayScrollbarsComponent } from "overlayscrollbars-vue";
+import "overlayscrollbars/styles/overlayscrollbars.css";
 
 const props = defineProps({
-  modelValue: {
-    type: String,
-    default: "",
-  },
+  modelValue: { type: String, default: "" },
 });
-
 const emit = defineEmits(["update:modelValue"]);
 
 const editorRef = ref(null);
+const scrollRef = ref(null);
 const showHint = ref(true);
+
+const options = {
+  scrollbars: { autoHide: "leave", autoHideDelay: 500 },
+};
 
 onMounted(() => {
   if (props.modelValue) {
@@ -53,40 +61,47 @@ function onBlur() {
     showHint.value = true;
   }
 }
-
-watch(
-  () => props.modelValue,
-  (val) => {
-    if (!val && editorRef.value) {
-      editorRef.value.innerText = "";
-      showHint.value = true;
-    }
-  }
-);
 </script>
 
 <style scoped>
 .submission-card {
   position: relative;
-  padding: 0
+  height: 100%;
+  box-sizing: border-box;
 }
 
+/* 滚动容器：固定高度，负责滚动 */
+.editor-scroll {
+  height: 100%;
+  width: 100%;
+}
+
+/* 编辑器：让内容自然增长 */
 .editor {
-  min-height: 120px;
+  max-height: calc(100vh - 336px);
+
   outline: none;
   font-size: 15px;
   line-height: 1.6;
   background: transparent;
   caret-color: rgb(var(--mdui-color-primary));
+
+  /* 关键：防止不换行 */
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
 }
 
+/* 占位 */
 .placeholder {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: -8px;
+  left: -8px;
+  margin-left: 8px;
+  margin-top: 8px;
   color: rgb(var(--mdui-color-on-surface-variant));
   pointer-events: none;
-  line-height: 1.6; /* 和编辑器一致，保证垂直对齐 */
+  line-height: 1.6;
 }
-
 </style>

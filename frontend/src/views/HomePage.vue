@@ -302,7 +302,7 @@
         <!-- 内容滚动区域 -->
         <OverlayScrollbarsComponent
           :options="options"
-          v-if="currentAssignment"
+          v-if="currentAssignment && isDynamicPageRef"
           style="height: calc(100vh - 230px); width: 100%"
         >
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px">
@@ -325,68 +325,72 @@
                 :data="block"
               />
             </template>
-
-            <!-- 如果是 Card 组件 -->
-            <template v-else>
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  height: 56px;
-                  margin-top: -8px;
-                "
-              >
-                <div
-                  style="
-                    margin-left: auto;
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                  "
-                >
-                  <mdui-button-icon icon="upload_file" @click="triggerUpload" />
-                  <mdui-button-icon
-                    style="margin-right: 16px"
-                    icon="dark_mode--outlined"
-                    @click="toggleTheme"
-                  />
-                </div>
-                <div
-                  style="
-                    position: absolute;
-                    bottom: 16px;
-                    right: 16px;
-                    display: flex;
-                    gap: 8px;
-                    z-index: 50;
-                  "
-                >
-                  <mdui-button
-                    @click="handleSubmit(currentAssignment.id)"
-                    variant="filled"
-                    end-icon="cloud_upload"
-                  >
-                    提交
-                  </mdui-button>
-                </div>
-              </div>
-              <!-- 顶部工具栏 -->
-              <div
-                style="display: flex; align-items: center; margin-bottom: 8px"
-              >
-                <!-- 上传按钮，调用 AttachmentUploader 内部方法 -->
-              </div>
-
-              <div>
-                <h1>提交作业</h1>
-              </div>
-              <div
-                style="display: flex; align-items: center; height: 56px"
-              ></div>
-              <SubmissionCard @submit="handleSubmit" />
-            </template>
           </div>
         </OverlayScrollbarsComponent>
+        <!-- 如果是 Card 组件 -->
+        <div v-if="!showHeaderAndFooter">
+          <!-- 顶部工具栏 -->
+          <div style="display: flex; align-items: center; height: 56px">
+            <!-- 上传按钮，调用 AttachmentUploader 内部方法 -->
+            <div
+              style="
+                margin-left: auto;
+                display: flex;
+                gap: 8px;
+                align-items: center;
+              "
+            >
+              <mdui-button-icon icon="attach_file" />
+              <mdui-button-icon icon="upload_file" @click="triggerUpload" />
+              <mdui-button-icon
+                style="margin-right: 16px"
+                icon="dark_mode--outlined"
+                @click="toggleTheme"
+              />
+            </div>
+          </div>
+          <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px">
+            <h1>提交作业</h1>
+          </div>
+          <div
+            style="
+              margin-top: 52px;
+              margin-left: 24px;
+              margin-right: 16px;
+              margin-bottom: 64px;
+            "
+          >
+            <OverlayScrollbarsComponent
+              style="height: calc(100vh - 230px); width: 100%"
+              :options="options"
+            >
+              <SubmissionCard
+                ref="submissionRef"
+                v-model="submission"
+                @submit="handleSubmit"
+                style="padding-left: 8px; padding-top: 8px"
+              />
+            </OverlayScrollbarsComponent>
+          </div>
+          <div
+            style="
+              position: absolute;
+              bottom: 16px;
+              right: 16px;
+              display: flex;
+              gap: 8px;
+              z-index: 50;
+            "
+          >
+            <mdui-button
+              @click="handleSubmit(currentAssignment.id)"
+              variant="filled"
+              end-icon="cloud_upload"
+            >
+              提交
+            </mdui-button>
+          </div>
+        </div>
 
         <!-- 底部操作按钮 -->
         <!-- 底部操作按钮，固定在右下 -->
@@ -508,12 +512,21 @@ const showHeaderAndFooter = ref(true);
 function updateWidth() {
   windowWidth.value = window.innerWidth;
 }
-
-const props = defineProps({
-  filterStatus: String,
-  isDynamicPage: { type: Boolean, default: true }, // 默认 true
+const submissionRef = ref(null);
+const submission = ref({
+  content: "",
+  attachments: [],
 });
 
+function triggerUpload() {
+  submissionRef.value?.triggerUpload();
+}
+const props = defineProps({
+  filterStatus: String,
+  modelValue: Object,
+  isDynamicPage: { type: Boolean, default: true }, // 默认 true
+});
+defineEmits(["update:modelValue"]);
 const isDynamicPageRef = ref(props.isDynamicPage);
 
 function handleSubmit(id) {

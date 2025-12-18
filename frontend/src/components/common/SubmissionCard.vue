@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 文本编辑器 -->
-    <TextEditor v-model="contentValue" style="margin-top: 8px" />
+    <TextEditor v-model="contentValue"  />
     <!-- 附件列表组件 -->
     <AttachmentUploader ref="uploader" v-model="attachmentsValue" />
 
@@ -17,6 +17,8 @@ import TextEditor from "./TextEditor.vue";
 import AttachmentUploader from "./AttachmentUploader.vue";
 import { setTheme } from "mdui/functions/setTheme.js";
 import { getTheme } from "mdui/functions/getTheme.js";
+import { defineExpose } from "vue";
+
 const props = defineProps({
   attachments: { type: Array, default: () => [] },
   content: { type: String, default: "" },
@@ -64,4 +66,9 @@ function toggleTheme() {
     localStorage.setItem("theme", "dark");
   }
 }
+defineExpose({
+  triggerUpload,
+  onSubmit
+});
+
 </script>
