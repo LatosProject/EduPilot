@@ -311,19 +311,19 @@
               <h3>
                 <small
                   ><mdui-icon-date-range
-                    style="position: relative; top: 4px"
+                    style="position: relative; top: 5px"
                   ></mdui-icon-date-range>
                   创建日期 {{ formatDeadline(currentAssignment.created_at) }}
                   <mdui-icon-supervisor-account
-                    style="position: relative; top: 4px"
+                    style="position: relative; top: 5px"
                   ></mdui-icon-supervisor-account>
                   创建人 {{ currentAssignment.created_by }}
                   <mdui-icon-grade
-                    style="position: relative; top: 4px"
+                    style="position: relative; top: 5px"
                   ></mdui-icon-grade>
                   满分 {{ currentAssignment.max_score }}
                   <mdui-icon-access-alarm
-                    style="position: relative; top: 4px"
+                    style="position: relative; top: 5px"
                   ></mdui-icon-access-alarm>
                   截止日期 {{ formatDeadline(currentAssignment.deadline) }}
                 </small>
@@ -348,10 +348,7 @@
             <mdui-button-icon
               style="margin-left: 16px"
               icon="arrow_back"
-              @click="
-                showHeaderAndFooter = true;
-                isDynamicPageRef = true;
-              "
+              @click="goBackFromSubmission"
             />
             <div
               style="
@@ -439,7 +436,7 @@
             "
           >
             <mdui-button
-              @click="handleSubmit(currentAssignment.id)"
+              @click="() => submissionRef?.onSubmit()"
               variant="filled"
               end-icon="cloud_upload"
             >
@@ -469,7 +466,7 @@
             忽略
           </mdui-button>
           <mdui-button
-            @click="handleSubmit(currentAssignment.id)"
+            @click="enterSubmissionMode"
             variant="filled"
             end-icon="arrow_forward"
           >
@@ -546,6 +543,7 @@ import { getProfile } from "../api/auth";
 import { logoutApi } from "../api/auth";
 import SubmissionCard from "../components/common/SubmissionCard.vue";
 import AttachmentUploader from "../components/common/AttachmentUploader.vue";
+import { submitAssignment } from "../api/submission";
 
 // 删除文件
 function removeFile(index) {
@@ -612,6 +610,24 @@ function triggerUpload() {
   submissionRef.value?.triggerUpload();
 }
 
+// 从提交页面返回时清空上传列表
+function goBackFromSubmission() {
+  showHeaderAndFooter.value = true;
+  isDynamicPageRef.value = true;
+  // 清空 uploaders（附件对话框与 submission 内部）
+  try {
+    uploaderRef.value?.clear && uploaderRef.value.clear();
+  } catch (e) {
+    console.error("clear uploaderRef failed", e);
+  }
+  try {
+    submissionRef.value?.clearAttachments && submissionRef.value.clearAttachments();
+  } catch (e) {
+    console.error("clear submissionRef failed", e);
+  }
+  files.value = [];
+}
+
 // 调用 AttachmentUploader 的 pick 方法以选择文件
 function pickAttachment() {
   uploaderRef.value?.pick();
@@ -633,10 +649,53 @@ const props = defineProps({
 defineEmits(["update:modelValue"]);
 const isDynamicPageRef = ref(props.isDynamicPage);
 
-function handleSubmit(id) {
-  // 切换渲染模式为 SubmissionCard
-  isDynamicPageRef.value = false;
-  showHeaderAndFooter.value = false;
+// 进入提交模式
+function enterSubmissionMode() {
+  isDynamicPageRef.value = false
+  showHeaderAndFooter.value = false
+}
+
+// 处理 SubmissionCard 的 submit 事件
+async function handleSubmit(payload) {
+  console.log('handleSubmit invoked with payload:', payload)
+  
+  if (!payload) {
+    console.warn('payload is empty')
+    return
+  }
+
+  const assignmentId = currentAssignment.value?.uuid
+  const classUuid = currentAssignment.value?.class_uuid
+  
+  if (!assignmentId || !classUuid) {
+    console.error('无法获取 assignmentId 或 classUuid')
+    return
+  }
+
+  // content 必填校验
+  if (!payload.content || payload.content.trim().length === 0) {
+    console.warn('提交内容不能为空')
+    return
+  }
+
+  try {
+    console.log('Submitting assignment:', { classUuid, assignmentId, contentLength: payload.content.length, attachmentCount: payload.attachments?.length })
+    // 上传并提交
+    await submitAssignment(classUuid, assignmentId, payload.content, payload.attachments || [])
+
+    // 提交成功后清空 UI
+    files.value = []
+    uploaderRef.value?.clear && uploaderRef.value.clear()
+    submissionRef.value?.clearAttachments && submissionRef.value.clearAttachments()
+
+    // 恢复主视图
+    showHeaderAndFooter.value = true
+    isDynamicPageRef.value = true
+    
+    console.log('提交成功')
+  } catch (e) {
+    console.error('提交失败', e)
+  }
 }
 
 // 解析 content 字符串为数组
@@ -837,6 +896,17 @@ onBeforeUnmount(() => {
   const osInstance = scrollbarRef.value?.osInstance();
   if (!osInstance) return;
   osInstance.elements().viewport.removeEventListener("scroll", onScroll);
+  // 离开页面时清空上传列表
+  try {
+    uploaderRef.value?.clear && uploaderRef.value.clear();
+  } catch (e) {
+    console.error("clear uploaderRef failed onBeforeUnmount", e);
+  }
+  try {
+    submissionRef.value?.clearAttachments && submissionRef.value.clearAttachments();
+  } catch (e) {
+    console.error("clear submissionRef failed onBeforeUnmount", e);
+  }
 });
 
 onUnmounted(() => {

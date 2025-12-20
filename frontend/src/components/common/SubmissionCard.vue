@@ -66,9 +66,17 @@ function toggleTheme() {
     localStorage.setItem("theme", "dark");
   }
 }
+function clearAttachments() {
+  attachmentsValue.value = [];
+  if (uploader.value && uploader.value.clear) {
+    uploader.value.clear();
+  }
+}
+
 defineExpose({
   triggerUpload,
-  onSubmit
+  onSubmit,
+  clearAttachments,
 });
 
 </script>
