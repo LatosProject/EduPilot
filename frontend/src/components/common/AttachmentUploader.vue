@@ -1,25 +1,56 @@
 <script setup>
-import { ref, defineExpose } from "vue";
+import { ref, watch, defineExpose } from "vue";
 
-const props = defineProps({ modelValue: Array });
-const emit = defineEmits(["update:modelValue"]);
+// 父组件传递过来的 `files`
+const props = defineProps({
+  modelValue: { type: Array, default: () => [] },
+});
+const emit = defineEmits(["update:modelValue"]); // 用于更新父组件的 `files`
 
-const files = ref([...props.modelValue]);
+// 本地副本，用于操作文件
+const files = ref([]);
+
+// 监听 `modelValue` 变化，更新本地 `files`
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    files.value = Array.isArray(newVal) ? [...newVal] : [];
+  },
+  { immediate: true }
+);
+
 const input = ref(null);
 
+// 打开文件选择框
 function pick() {
   input.value.click();
 }
 
+// 处理文件选择
 function onChange(e) {
   const selected = Array.from(e.target.files);
-  files.value.push(...selected);
+
+  // 去重：只添加尚未存在的文件
+  selected.forEach((file) => {
+    if (
+      !files.value.some((f) => f.name === file.name && f.size === file.size)
+    ) {
+      files.value.push(file);
+    }
+  });
+
+  // 更新父组件的 `files`
   emit("update:modelValue", files.value);
+  console.log(files.value);
+
+  // 清空 input 的值，以便允许选择相同文件再次触发 change 事件
+  if (input.value) input.value.value = "";
 }
 
+// 删除文件
 function remove(i) {
-  files.value.splice(i, 1);
-  emit("update:modelValue", files.value);
+  files.value.splice(i, 1); // 删除文件
+  emit("update:modelValue", files.value); // 更新父组件的 `files`
 }
 
 // 暴露 pick 方法给外部调用
@@ -28,12 +59,7 @@ defineExpose({ pick });
 
 <template>
   <div>
-    <ul>
-      <li v-for="(file, i) in files" :key="i">
-        {{ file.name }}
-        <mdui-button-icon icon="close" @click="remove(i)" />
-      </li>
-    </ul>
+    <!-- 文件输入框 -->
     <input ref="input" type="file" multiple hidden @change="onChange" />
   </div>
 </template>

@@ -309,10 +309,23 @@
             <div v-if="currentAssignment && showHeaderAndFooter">
               <h1>{{ currentAssignment.title }}</h1>
               <h3>
-                <small>
-                  创建日期:
-                  {{ formatDeadline(currentAssignment.created_at) }} 创建人:
-                  {{ currentAssignment.created_by }}
+                <small
+                  ><mdui-icon-date-range
+                    style="position: relative; top: 4px"
+                  ></mdui-icon-date-range>
+                  创建日期 {{ formatDeadline(currentAssignment.created_at) }}
+                  <mdui-icon-supervisor-account
+                    style="position: relative; top: 4px"
+                  ></mdui-icon-supervisor-account>
+                  创建人 {{ currentAssignment.created_by }}
+                  <mdui-icon-grade
+                    style="position: relative; top: 4px"
+                  ></mdui-icon-grade>
+                  满分 {{ currentAssignment.max_score }}
+                  <mdui-icon-access-alarm
+                    style="position: relative; top: 4px"
+                  ></mdui-icon-access-alarm>
+                  截止日期 {{ formatDeadline(currentAssignment.deadline) }}
                 </small>
               </h3>
             </div>
@@ -332,6 +345,14 @@
           <!-- 顶部工具栏 -->
           <div style="display: flex; align-items: center; height: 56px">
             <!-- 上传按钮，调用 AttachmentUploader 内部方法 -->
+            <mdui-button-icon
+              style="margin-left: 16px"
+              icon="arrow_back"
+              @click="
+                showHeaderAndFooter = true;
+                isDynamicPageRef = true;
+              "
+            />
             <div
               style="
                 margin-left: auto;
@@ -340,8 +361,12 @@
                 align-items: center;
               "
             >
-              <mdui-button-icon icon="attach_file" />
-              <mdui-button-icon icon="upload_file" @click="triggerUpload" />
+              <mdui-button-icon
+                v-if="files.length > 0"
+                @click="openUploadDialog"
+                icon="attach_file"
+              />
+              <mdui-button-icon icon="upload_file" @click="pickAttachment" />
               <mdui-button-icon
                 style="margin-right: 16px"
                 icon="dark_mode--outlined"
@@ -349,6 +374,37 @@
               />
             </div>
           </div>
+          <!-- 上传对话框 -->
+          <AttachmentUploader ref="uploaderRef" v-model="files" />
+          <mdui-dialog
+            :open="uploadDialogOpen"
+            @close="uploadDialogOpen = false"
+            close-on-overlay-click
+            close-on-esc
+          >
+            <div style="max-width: 320px; overflow: hidden" id="picker">
+              <!-- 附件列表 -->
+              <mdui-list>
+                <mdui-list-subheader>上传列表</mdui-list-subheader>
+                <mdui-list-item
+                  v-for="(file, i) in files"
+                  :key="file.name + '_' + file.size"
+                  nonclickable
+                >
+                  {{ file.name }}
+                  <mdui-icon slot="icon" name="attach_file"></mdui-icon>
+                  <!-- 删除按钮 -->
+                  <mdui-button-icon
+                    slot="end-icon"
+                    icon="close"
+                    @click="removeFile(i)"
+                    class="mdui-text-color-red"
+                  />
+                </mdui-list-item>
+              </mdui-list>
+            </div>
+          </mdui-dialog>
+
           <div class="mdui-prose" style="margin-left: 32px; margin-top: 8px">
             <h1>提交作业</h1>
           </div>
@@ -449,6 +505,14 @@
 </template>
 
 <script setup>
+import "@mdui/icons/search.js";
+import "@mdui/icons/supervisor-account.js";
+import "@mdui/icons/grade.js";
+import "@mdui/icons/date-range.js";
+import "@mdui/icons/access-alarm.js";
+import "mdui/components/list.js";
+import "mdui/components/list-item.js";
+import "mdui/components/list-subheader.js";
 import NavigationRail from "../components/common/NavigationRail.vue";
 import SearchCard from "../components/common/SearchCard.vue";
 import TaskButtonGroup from "../components/common/TaskButtonGroup.vue";
@@ -481,10 +545,30 @@ import TipBlock from "@/components/blocks/TipBlock.vue";
 import { getProfile } from "../api/auth";
 import { logoutApi } from "../api/auth";
 import SubmissionCard from "../components/common/SubmissionCard.vue";
+import AttachmentUploader from "../components/common/AttachmentUploader.vue";
+
+// 删除文件
+function removeFile(index) {
+  console.log("removeFile called, index:", index, "before:", files.value);
+  const removed = files.value[index];
+  // 使用不可变方式替换数组以确保响应式更新
+  files.value = files.value.filter((_, idx) => idx !== index);
+  console.log("after:", files.value, "removed:", removed);
+  // 如果删除后没有文件，自动关闭上传对话框
+  if (!Array.isArray(files.value) || files.value.length === 0) {
+    uploadDialogOpen.value = false;
+  }
+}
+
 const visible = ref(false);
 const popoverStyle = ref({ top: "0px", left: "0px", position: "absolute" });
 
 const showMobileSearch = ref(false);
+const files = ref([]); // 存储文件
+const uploaderRef = ref(null);
+const hasFiles = computed(
+  () => Array.isArray(files.value) && files.value.length > 0
+);
 
 const globalStore = useGlobalStore();
 
@@ -508,6 +592,12 @@ const windowWidth = ref(window.innerWidth);
 const user = ref(null);
 const showAvatar = computed(() => windowWidth.value > 1000);
 const showHeaderAndFooter = ref(true);
+const uploadDialogOpen = ref(false);
+
+const openUploadDialog = () => {
+  uploadDialogOpen.value = true;
+  console.log(files.value); // 在每次文件操作后输出
+};
 
 function updateWidth() {
   windowWidth.value = window.innerWidth;
@@ -521,6 +611,20 @@ const submission = ref({
 function triggerUpload() {
   submissionRef.value?.triggerUpload();
 }
+
+// 调用 AttachmentUploader 的 pick 方法以选择文件
+function pickAttachment() {
+  uploaderRef.value?.pick();
+}
+
+// 监听 files，文件列表为空时自动关闭上传对话框
+watch(files, (v) => {
+  console.log("父组件 files:", v);
+  if (!Array.isArray(v) || v.length === 0) {
+    uploadDialogOpen.value = false;
+  }
+});
+
 const props = defineProps({
   filterStatus: String,
   modelValue: Object,
@@ -793,8 +897,10 @@ function updatePopoverPosition() {
 }
 
 .left-panel.full-width {
-  flex-grow: 1; /* 当窗口小于1000px时，撑满 */
-  min-width: 0; /* 避免 min-width 限制动画 */
+  flex-grow: 1;
+  /* 当窗口小于1000px时，撑满 */
+  min-width: 0;
+  /* 避免 min-width 限制动画 */
   padding-right: 16px;
 }
 
@@ -815,7 +921,8 @@ header {
 }
 
 .profile-popover {
-  position: absolute; /* 必须有 */
+  position: absolute;
+  /* 必须有 */
   width: 400px;
   background: rgb(var(--mdui-color-surface-container-high));
   border-radius: 12px;
