@@ -53,8 +53,15 @@ function remove(i) {
   emit("update:modelValue", files.value); // 更新父组件的 `files`
 }
 
-// 暴露 pick 方法给外部调用
-defineExpose({ pick });
+// 清空文件列表
+function clear() {
+  files.value = [];
+  emit("update:modelValue", files.value);
+  if (input.value) input.value.value = "";
+}
+
+// 暴露 pick 和 clear 方法给外部调用
+defineExpose({ pick, clear });
 </script>
 
 <template>

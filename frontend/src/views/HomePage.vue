@@ -439,6 +439,7 @@
             "
           >
             <mdui-button
+              v-if="!currentAssignment.submitted"
               @click="handleSubmit(currentAssignment.id)"
               variant="filled"
               end-icon="cloud_upload"
@@ -451,7 +452,14 @@
         <!-- 底部操作按钮 -->
         <!-- 底部操作按钮，固定在右下 -->
         <div
-          v-if="currentAssignment && showHeaderAndFooter"
+          v-if="
+            currentAssignment &&
+            showHeaderAndFooter &&
+            !currentAssignment.submitted &&
+            currentStatus !== 'done' &&
+            (new Date(currentAssignment.deadline).getTime() >= Date.now() ||
+              currentAssignment.allow_late_submission)
+          "
           style="
             position: absolute;
             bottom: 16px;

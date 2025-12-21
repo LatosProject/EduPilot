@@ -241,6 +241,19 @@ async def get_assignment(
     if assignment is None:
         raise exceptions.NotExists()
 
+    # 标记该作业是否被当前用户提交过
+    try:
+        res = await db.execute(
+            select(AssignmentSubmissionModel).where(
+                AssignmentSubmissionModel.assignment_uuid == assignment_uuid,
+                AssignmentSubmissionModel.user_uuid == user_uuid,
+            )
+        )
+        submitted = res.scalar_one_or_none() is not None
+    except Exception:
+        submitted = False
+    setattr(assignment, "submitted", submitted)
+
     return assignment
 
 
@@ -437,9 +450,41 @@ async def get_assignments(
     offset = (page - 1) * size
     stmt = select(AssignmentModel).where(AssignmentModel.class_uuid == class_uuid)
 
-    # 状态过滤（如 status='published'）
+    # 状态过滤（支持前端自定义的筛选：pending / done / expired）
     if status:
-        stmt = stmt.where(AssignmentModel.status == status)
+        # 前端使用 'done' 来表示学生已提交的作业；'pending' 表示未过期且未提交；'expired' 表示已过期且未提交
+        now = datetime.now(timezone.utc)
+        if status == "done":
+            # 仅返回当前用户已提交的作业
+            subq = (
+                select(AssignmentSubmissionModel.assignment_uuid)
+                .where(AssignmentSubmissionModel.user_uuid == user_uuid)
+                .scalar_subquery()
+            )
+            stmt = stmt.where(AssignmentModel.uuid.in_(subq))
+        elif status == "pending":
+            # 截止时间在现在或之后，且当前用户尚未提交
+            subq = (
+                select(AssignmentSubmissionModel.assignment_uuid)
+                .where(AssignmentSubmissionModel.user_uuid == user_uuid)
+                .scalar_subquery()
+            )
+            stmt = stmt.where(AssignmentModel.deadline >= now).where(
+                ~AssignmentModel.uuid.in_(subq)
+            )
+        elif status == "expired":
+            # 截止时间在现在之前，且当前用户尚未提交
+            subq = (
+                select(AssignmentSubmissionModel.assignment_uuid)
+                .where(AssignmentSubmissionModel.user_uuid == user_uuid)
+                .scalar_subquery()
+            )
+            stmt = stmt.where(AssignmentModel.deadline < now).where(
+                ~AssignmentModel.uuid.in_(subq)
+            )
+        else:
+            # fallback：按数据库中 AssignmentModel.status 字段过滤
+            stmt = stmt.where(AssignmentModel.status == status)
 
     # 模糊搜索（匹配 title 或 description）
     if search:
@@ -471,7 +516,34 @@ async def get_assignments(
     )
 
     if status:
-        count_stmt = count_stmt.where(AssignmentModel.status == status)
+        now = datetime.now(timezone.utc)
+        if status == "done":
+            subq = (
+                select(AssignmentSubmissionModel.assignment_uuid)
+                .where(AssignmentSubmissionModel.user_uuid == user_uuid)
+                .scalar_subquery()
+            )
+            count_stmt = count_stmt.where(AssignmentModel.uuid.in_(subq))
+        elif status == "pending":
+            subq = (
+                select(AssignmentSubmissionModel.assignment_uuid)
+                .where(AssignmentSubmissionModel.user_uuid == user_uuid)
+                .scalar_subquery()
+            )
+            count_stmt = count_stmt.where(AssignmentModel.deadline >= now).where(
+                ~AssignmentModel.uuid.in_(subq)
+            )
+        elif status == "expired":
+            subq = (
+                select(AssignmentSubmissionModel.assignment_uuid)
+                .where(AssignmentSubmissionModel.user_uuid == user_uuid)
+                .scalar_subquery()
+            )
+            count_stmt = count_stmt.where(AssignmentModel.deadline < now).where(
+                ~AssignmentModel.uuid.in_(subq)
+            )
+        else:
+            count_stmt = count_stmt.where(AssignmentModel.status == status)
     if search:
         count_stmt = count_stmt.where(
             or_(

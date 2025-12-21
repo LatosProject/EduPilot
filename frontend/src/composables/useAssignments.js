@@ -34,6 +34,10 @@ export function useAssignments(classList) {
             // 顺序获取每个班级作业
             for (const cls of classList) {
                 const res = await getAssignments(cls, 1, 10, 'created_at', 'asc', status)
+                // 为每个作业添加 class_uuid，便于后续提交时使用
+                res.items.forEach(item => {
+                    item.class_uuid = cls
+                })
                 allHomework.push(...res.items)
             }
 

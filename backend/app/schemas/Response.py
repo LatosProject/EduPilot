@@ -59,6 +59,7 @@ class AssignmentData(BaseModel):
     created_by: Optional[StrictStr] = Field(None, description="创建者信息")
     created_at: Optional[datetime] = Field(None, description="创建时间")
     updated_at: Optional[datetime] = Field(None, description="更新时间")
+    submitted: Optional[bool] = Field(False, description="当前用户是否已提交该作业")
     model_config = {"from_attributes": True}
 
     @field_validator("attachments", mode="before")

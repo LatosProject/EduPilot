@@ -146,6 +146,22 @@
           >{{ step === 1 ? "继续" : "登录" }}</mdui-button
         >
       </div>
+      <mdui-dialog ref="alphaDialog" close-on-overlay-click close-on-esc>
+        <div style="min-width: 320px; padding: 16px">
+          <h3 style="margin: 0 0 8px 0">EduPilot</h3>
+          <div style="color: var(--mdui-color-text-secondary)">
+            这是第一个 Alpha 版本，功能可能不稳定或不完整，请谨慎使用。
+            测试账户：<br />
+            用户名 user <br />
+            密码 1234
+          </div>
+          <div style="display: flex; justify-content: center; margin-top: 16px">
+            <mdui-button variant="filled" @click="alphaDialog.open = false"
+              >我知道了</mdui-button
+            >
+          </div>
+        </div>
+      </mdui-dialog>
     </div>
   </div>
 </template>
@@ -160,6 +176,10 @@ import { login } from "../api/auth";
 
 // 引入 mdui 文本框组件
 import "mdui/components/text-field.js";
+import "mdui/components/dialog.js";
+
+// Alpha 提示对话框引用
+const alphaDialog = ref(null);
 
 // 全局状态管理
 import { useGlobalStore } from "../stores/global";
@@ -310,6 +330,13 @@ onMounted(async () => {
   ) {
     router.replace({ name: "Invite" });
     return;
+  }
+
+  // 打开 Alpha 提示对话框（未重定向时显示）
+  try {
+    alphaDialog.value && (alphaDialog.value.open = true);
+  } catch (e) {
+    console.warn("无法打开 alphaDialog", e);
   }
 });
 </script>
