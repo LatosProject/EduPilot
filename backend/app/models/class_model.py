@@ -73,6 +73,12 @@ class AssignmentModel(Base):
     created_at = Column(DateTime, nullable=True, comment="创建时间")
 
     class_ = relationship("ClassModel", back_populates="assignments")
+    submissions = relationship(
+        "AssignmentSubmissionModel",
+        back_populates="assignment",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 class ClassMemberModel(Base):
@@ -124,3 +130,5 @@ class AssignmentSubmissionModel(Base):
 
     content = Column(Text, nullable=False, comment="提交内容")
     attachments = Column(JSON, nullable=True, comment="附件列表（JSON数组）")
+
+    assignment = relationship("AssignmentModel", back_populates="submissions")

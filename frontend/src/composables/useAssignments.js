@@ -1,12 +1,12 @@
 import { getAssignment, getAssignments } from "../api/assignment";
-import { ref, watch } from "vue";
+import { ref, watch, unref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 /**
  * 自定义组合函数：管理作业列表、选中状态和路由同步
- * @param {Array} classList 班级 UUID 列表
+ * @param {Array|Ref<Array>} classListOrRef 班级 UUID 列表（支持响应式引用）
  */
-export function useAssignments(classList) {
+export function useAssignments(classListOrRef) {
   const route = useRoute(); // 获取当前路由信息
   const router = useRouter(); // 路由跳转工具
 
@@ -27,6 +27,17 @@ export function useAssignments(classList) {
    * @param {String} status 过滤状态，默认 'pending'
    */
   async function fetchAssignments(status = "pending") {
+    // 获取当前的班级列表（支持响应式引用）
+    const classList = unref(classListOrRef);
+
+    // 如果班级列表为空，不请求
+    if (!classList || classList.length === 0) {
+      assignments.value = [];
+      selectedId.value = null;
+      currentAssignment.value = null;
+      return;
+    }
+
     try {
       const allHomework = [];
 
@@ -61,10 +72,10 @@ export function useAssignments(classList) {
         // 否则默认选中第一个作业
         selectAssignment(assignments.value[0].uuid);
       } else {
-        // 作业列表为空，清空选中状态并路由跳转到空 id
+        // 作业列表为空，清空选中状态并路由跳转到首页
         selectedId.value = null;
         currentAssignment.value = null;
-        router.replace({ name: "AssignmentDetail", params: { id: null } });
+        router.replace({ name: "Home" });
       }
     } catch (e) {
       console.error("获取作业失败", e);

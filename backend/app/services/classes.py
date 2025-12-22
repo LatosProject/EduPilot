@@ -508,6 +508,20 @@ async def get_assignments(
     result = await db.execute(stmt)
     items = result.scalars().all()
 
+    # 为每个作业标记当前用户是否已提交
+    if items:
+        # 查询当前用户已提交的作业 UUID 列表
+        submitted_uuids_stmt = select(AssignmentSubmissionModel.assignment_uuid).where(
+            AssignmentSubmissionModel.user_uuid == user_uuid,
+            AssignmentSubmissionModel.assignment_uuid.in_([item.uuid for item in items])
+        )
+        submitted_result = await db.execute(submitted_uuids_stmt)
+        submitted_uuids = set(submitted_result.scalars().all())
+
+        # 为每个作业设置 submitted 属性
+        for item in items:
+            setattr(item, "submitted", item.uuid in submitted_uuids)
+
     # 总数查询（用于分页）
     count_stmt = (
         select(func.count())

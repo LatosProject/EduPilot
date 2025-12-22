@@ -451,9 +451,8 @@
           v-if="
             currentAssignment &&
             showHeaderAndFooter &&
-            !currentAssignment.submitted &&
+            currentAssignment.submitted !== true &&
             currentStatus !== 'done' &&
-            currentStatus !== '' &&
             (new Date(currentAssignment.deadline).getTime() >= Date.now() ||
               currentAssignment.allow_late_submission)
           "
@@ -579,14 +578,14 @@ const hasFiles = computed(
 
 const globalStore = useGlobalStore();
 
-// 作业数据及状态管理
+// 作业数据及状态管理（传入响应式引用，支持动态更新）
 const {
   assignments,
   selectedId,
   currentStatus,
   currentAssignment,
   fetchAssignments,
-} = useAssignments(globalStore.classUuids);
+} = useAssignments(computed(() => globalStore.classUuids));
 const route = useRoute();
 const router = useRouter();
 
