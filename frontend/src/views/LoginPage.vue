@@ -203,7 +203,7 @@ const step = computed(() => (route.path.endsWith("password") ? 2 : 1));
 
 // 输入事件：手动写入触发的值
 const onUsernameInput = (e) => {
-  username.value = e.target.value;
+  username.value = e.target.value.toLowerCase();
 };
 const onPasswordInput = (e) => {
   password.value = e.target.value;
