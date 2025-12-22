@@ -6,7 +6,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.v1 import auth, classes, health, users
+from api.v1 import auth, classes, files, health, users
 from core.exception_handlers import register_exception_handlers
 from core.logger import setup_logging
 from core.middleware import AccessLogMiddleware
@@ -48,6 +48,7 @@ app = FastAPI(
 app.include_router(auth.router, prefix="/api/v1", tags=["Auth"])
 app.include_router(users.router, prefix="/api/v1", tags=["Users"])
 app.include_router(classes.router, prefix="/api/v1", tags=["Classes"])
+app.include_router(files.router, prefix="/api/v1", tags=["Files"])
 app.include_router(health.router, prefix="", tags=["Health"])
 app.add_middleware(AccessLogMiddleware)
 

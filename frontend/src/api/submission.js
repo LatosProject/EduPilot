@@ -38,12 +38,14 @@ export async function submitAssignment(classUuid, assignmentUuid, content, attac
 
     // 否则视为 File 并上传
     try {
+      console.log('Uploading file:', a.name, 'size:', a.size, 'type:', a.type)
       const info = await uploadFile(a)
       if (info) uploaded.push(info)
     } catch (e) {
-      // 如果上传某个文件失败，记录并继续（或抛出以便上层处理）
-      console.error('uploadFile failed', e)
-      throw e
+      // 如果上传某个文件失败，记录详细错误信息
+      const errorDetail = e.response?.data?.detail || e.message || '未知错误'
+      console.error('uploadFile failed:', errorDetail, e)
+      throw new Error(`文件 "${a.name}" 上传失败: ${errorDetail}`)
     }
   }
 

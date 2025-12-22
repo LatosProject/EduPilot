@@ -372,7 +372,7 @@
             </div>
           </div>
           <!-- 上传对话框 -->
-          <AttachmentUploader ref="uploaderRef" v-model="files" />
+          <AttachmentUploader ref="uploaderRef" v-model="files" @error="onUploadError" />
           <mdui-dialog
             :open="uploadDialogOpen"
             @close="uploadDialogOpen = false"
@@ -419,7 +419,10 @@
             >
               <SubmissionCard
                 ref="submissionRef"
-                v-model="submission"
+                :content="submission.content"
+                :attachments="submission.attachments"
+                @update:content="submission.content = $event"
+                @update:attachments="submission.attachments = $event"
                 @submit="handleSubmit"
                 style="padding-left: 8px; padding-top: 8px"
               />
@@ -642,6 +645,16 @@ function pickAttachment() {
   uploaderRef.value?.pick();
 }
 
+// 处理上传错误（如文件超过大小限制）
+function onUploadError(error) {
+  const snackbar = document.querySelector(".upload_snackbar");
+  if (snackbar) {
+    snackbar.textContent = error.message || "上传失败";
+    snackbar.open = true;
+  }
+  console.warn("上传错误:", error);
+}
+
 // 监听 files，文件列表为空时自动关闭上传对话框
 watch(files, (v) => {
   console.log("父组件 files:", v);
@@ -690,19 +703,25 @@ async function handleSubmit(payload) {
     return;
   }
 
+  // 合并两个来源的附件：SubmissionCard 内部的 + 顶部上传的
+  const allAttachments = [
+    ...(payload.attachments || []),
+    ...(files.value || []),
+  ];
+
   try {
     console.log("Submitting assignment:", {
       classUuid,
       assignmentId,
       contentLength: payload.content.length,
-      attachmentCount: payload.attachments?.length,
+      attachmentCount: allAttachments.length,
     });
     // 上传并提交
     await submitAssignment(
       classUuid,
       assignmentId,
       payload.content,
-      payload.attachments || []
+      allAttachments
     );
 
     // 提交成功后清空 UI
@@ -737,7 +756,8 @@ async function handleSubmit(payload) {
   } catch (e) {
     console.error("提交失败", e);
     const snackbar = document.querySelector(".upload_snackbar");
-    snackbar.textContent = "未知错误";
+    const errorMsg = e.message || "未知错误";
+    snackbar.textContent = errorMsg;
     snackbar.open = true;
   }
 }
@@ -869,6 +889,17 @@ function toggleTheme() {
 // 跳转作业详情
 function goDetail(id) {
   selectedId.value = id;
+
+  // 如果在提交界面，先退出提交模式
+  if (!showHeaderAndFooter.value || !isDynamicPageRef.value) {
+    showHeaderAndFooter.value = true;
+    isDynamicPageRef.value = true;
+    // 清理上传状态
+    files.value = [];
+    uploaderRef.value?.clear?.();
+    submissionRef.value?.clearAttachments?.();
+  }
+
   router.push({ name: "AssignmentDetail", params: { id } });
 }
 

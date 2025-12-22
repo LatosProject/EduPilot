@@ -69,11 +69,25 @@ export default defineConfig({
   },
 
   server: {
+    host: '0.0.0.0', // 监听所有网络接口，允许外部访问
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api/, '/api'),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
+            // 传递真实客户端 IP（处理 IPv6 格式）
+            let clientIp = req.socket.remoteAddress || req.headers['x-forwarded-for'];
+            // 去除 IPv6 前缀 ::ffff:
+            if (clientIp && clientIp.startsWith('::ffff:')) {
+              clientIp = clientIp.replace('::ffff:', '');
+            }
+            if (clientIp) {
+              proxyReq.setHeader('X-Forwarded-For', clientIp);
+            }
+          });
+        },
       },
     },
   },

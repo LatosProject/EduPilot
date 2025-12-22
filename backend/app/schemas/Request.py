@@ -25,7 +25,7 @@ class CreateClassRequest(BaseModel):
 
 class Attachment(BaseModel):
     filename: str
-    url: HttpUrl
+    url: str  # 支持相对路径和完整 URL
     
 
 
