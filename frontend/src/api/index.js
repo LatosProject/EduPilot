@@ -1,11 +1,12 @@
 // src/apis/index.js
+
 import axios from "axios";
 import { refreshToken } from "./auth";
 import router from '@/router';
 
 // 创建 Axios 实例
 const instance = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 5000,
   withCredentials: true,
 });
@@ -21,7 +22,7 @@ instance.interceptors.request.use((config) => {
 
 // --- 响应拦截器设置刷新机制 ---
 const MAX_RETRY_ATTEMPTS = 3;    // 最大重试次数
-const REFRESH_RETRY_DELAY = 300; // 每次重试延迟(ms)
+const REFRESH_RETRY_DELAY = 100; // 每次重试延迟(ms)
 
 let isRefreshing = false;        // 是否正在刷新 token
 let refreshSubscribers = [];     // 刷新队列

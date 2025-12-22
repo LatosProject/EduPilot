@@ -38,3 +38,19 @@ export async function getAssignments(classUuid, page = 1, size = 10, order_by = 
     throw error  // 让调用者可以捕获错误
   }
 }
+
+/**
+ * 获取单个作业详情
+ * @param {string} classUuid
+ * @param {string} assignmentUuid
+ */
+export async function getAssignment(classUuid, assignmentUuid) {
+  try {
+    const url = `/api/v1/classes/${classUuid}/homeworks/${assignmentUuid}`
+    const res = await instance.get(url)
+    return res.data?.data || null
+  } catch (error) {
+    console.error('获取作业详情失败', error)
+    throw error
+  }
+}

@@ -1,89 +1,142 @@
-import { ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { getAssignment, getAssignments } from "../api/assignment";
+import { isRef, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
-import { getAssignments } from '../api/assignment'
-
-/**
- * 自定义组合函数：管理作业列表、选中状态和路由同步
- * @param {Array} classList 班级 UUID 列表
- */
 export function useAssignments(classList) {
-    const route = useRoute()   // 获取当前路由信息
-    const router = useRouter() // 路由跳转工具
+  // 核心：必须在 setup 同步执行阶段调用
+  const route = useRoute();
+  const router = useRouter();
 
-    // 所有作业列表
-    const assignments = ref([])
+  const assignments = ref([]);
+  const selectedId = ref(null);
+  const currentStatus = ref("pending");
+  const currentAssignment = ref(null);
 
-    // 当前选中作业 UUID
-    const selectedId = ref(null)
+  const getClassListArray = () =>
+    isRef(classList) ? classList.value : classList;
 
-    // 当前过滤状态（pending / done / expired）
-    const currentStatus = ref('pending')
+  /**
+   * 选中并获取作业详情
+   */
+  async function selectAssignment(uuid) {
+    if (!uuid || !assignments.value.length) return;
+    selectedId.value = uuid;
 
-    // 当前选中的作业对象
-    const currentAssignment = ref(null)
+    const fromList = assignments.value.find((a) => a.uuid === uuid);
+    if (fromList && fromList.class_uuid) {
+      try {
+        const detail = await getAssignment(fromList.class_uuid, uuid);
+        currentAssignment.value = { ...fromList, ...detail };
+        return;
+      } catch (e) {
+        console.warn("获取详情失败，回退至列表数据", e);
+      }
+    }
+    currentAssignment.value = fromList || null;
+  }
 
-    /**
-     * 获取作业列表
-     * @param {String} status 过滤状态，默认 'pending'
-     */
-    async function fetchAssignments(status = 'pending') {
+  /**
+   * 获取作业列表并同步路由
+   */
+  async function fetchAssignments(status = "pending") {
+    const currentList = getClassListArray();
+    if (!currentList || currentList.length === 0) {
+      assignments.value = [];
+      return;
+    }
+
+    // 安全检查：如果 route 没注入成功则终止，防止 params of undefined
+    if (!route || !route.params) {
+      console.error(
+        "Vue Router 上下文未找到，请确保在 setup 顶层使用 useAssignments"
+      );
+      return;
+    }
+
+    try {
+      const promises = currentList.map(async (cls) => {
         try {
-            const allHomework = []
-
-            // 顺序获取每个班级作业
-            for (const cls of classList) {
-                const res = await getAssignments(cls, 1, 10, 'created_at', 'asc', status)
-                // 为每个作业添加 class_uuid，便于后续提交时使用
-                res.items.forEach(item => {
-                    item.class_uuid = cls
-                })
-                allHomework.push(...res.items)
-            }
-
-            assignments.value = allHomework
-
-            // 判断路由中 id 是否在作业列表中
-            const idInList = route.params.id && assignments.value.some(a => a.uuid === route.params.id)
-
-            if (idInList) {
-                // 如果路由 id 存在，选中对应作业
-                selectAssignment(route.params.id)
-            } else if (assignments.value.length > 0) {
-                // 否则默认选中第一个作业
-                selectAssignment(assignments.value[0].uuid)
-            } else {
-                // 作业列表为空，清空选中状态并路由跳转到空 id
-                selectedId.value = null
-                currentAssignment.value = null
-                router.replace({ name: 'AssignmentDetail', params: { id: null } })
-            }
-        } catch (e) {
-            console.error('获取作业失败', e)
+          const res = await getAssignments(
+            cls,
+            1,
+            10,
+            "created_at",
+            "asc",
+            status
+          );
+          return (res?.items || []).map((item) => ({
+            ...item,
+            class_uuid: cls,
+          }));
+        } catch (err) {
+          return [];
         }
-    }
+      });
 
-    /**
-     * 选中作业
-     * @param {String} uuid 作业 UUID
-     */
-    function selectAssignment(uuid) {
-        selectedId.value = uuid
-        currentAssignment.value = assignments.value.find(a => a.uuid === uuid) || null
-    }
+      const results = await Promise.all(promises);
+      const allHomework = results.flat();
+      assignments.value = allHomework;
 
-    // 监听路由 id 变化，保持选中作业同步
-    watch(() => route.params.id, (newId) => {
-        if (newId) selectAssignment(newId)
-    })
+      if (allHomework.length > 0) {
+        // 使用 route.params 之前已经过了上面的安全检查
+        const routeId = route.params.id;
+        const target =
+          allHomework.find((a) => a.uuid === routeId) || allHomework[0];
 
-    return {
-        assignments,        // 作业列表
-        selectedId,         // 当前选中作业 UUID
-        currentStatus,      // 当前过滤状态
-        currentAssignment,  // 当前选中作业对象
-        fetchAssignments,   // 获取作业列表函数
-        selectAssignment,   // 选中作业函数
-        router,             // 路由实例
+        selectAssignment(target.uuid);
+
+        if (routeId !== target.uuid) {
+          router
+            .replace({
+              name: "AssignmentDetail",
+              params: { id: target.uuid },
+              query: route.query,
+            })
+            .catch(() => {});
+        }
+      } else {
+        selectedId.value = null;
+        currentAssignment.value = null;
+        if (route.params.id) {
+          router
+            .replace({ name: "AssignmentDetail", params: { id: "" } })
+            .catch(() => {});
+        }
+      }
+    } catch (e) {
+      console.error("fetchAssignments 异常", e);
     }
+  }
+
+  // --- 响应式监听 ---
+
+  // 1. 监听班级列表变化 (只保留这一个)
+  watch(
+    () => getClassListArray(),
+    (newList) => {
+      if (newList && newList.length > 0) {
+        fetchAssignments(currentStatus.value);
+      }
+    },
+    { immediate: true, deep: true }
+  );
+
+  // 2. 监听路由 ID 变化 (当用户点击左侧列表切换时触发)
+  watch(
+    () => route?.params?.id,
+    (newId) => {
+      if (newId && newId !== selectedId.value) {
+        selectAssignment(newId);
+      }
+    }
+  );
+
+  return {
+    assignments,
+    selectedId,
+    currentStatus,
+    currentAssignment,
+    fetchAssignments,
+    selectAssignment,
+  };
 }
