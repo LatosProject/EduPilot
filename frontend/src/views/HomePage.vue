@@ -548,65 +548,228 @@ import TextBlock from "@/components/blocks/TextBlock.vue";
 import ListBlock from "@/components/blocks/ListBlock.vue";
 import AttachmentBlock from "@/components/blocks/AttachmentBlock.vue";
 import TipBlock from "@/components/blocks/TipBlock.vue";
-import { getProfile, logoutApi } from "../api/auth";
+import { getProfile } from "../api/auth";
+import { logoutApi } from "../api/auth";
 import SubmissionCard from "../components/common/SubmissionCard.vue";
 import AttachmentUploader from "../components/common/AttachmentUploader.vue";
 import { submitAssignment } from "../api/submission";
 
-// --- 状态定义 ---
-const globalStore = useGlobalStore();
-const route = useRoute();
-const router = useRouter();
-const classUuids = ref([]); // 【核心】在此处统一定义班级列表
+// 删除文件
+function removeFile(index) {
+  console.log("removeFile called, index:", index, "before:", files.value);
+  const removed = files.value[index];
+  // 使用不可变方式替换数组以确保响应式更新
+  files.value = files.value.filter((_, idx) => idx !== index);
+  console.log("after:", files.value, "removed:", removed);
+  // 如果删除后没有文件，自动关闭上传对话框
+  if (!Array.isArray(files.value) || files.value.length === 0) {
+    uploadDialogOpen.value = false;
+  }
+}
 
-// 【核心修复】必须在 setup 顶层调用，传入 ref。内部会自动 watch classUuids
+const visible = ref(false);
+const popoverStyle = ref({ top: "0px", left: "0px", position: "absolute" });
+
+const showMobileSearch = ref(false);
+const files = ref([]); // 存储文件
+const uploaderRef = ref(null);
+const hasFiles = computed(
+  () => Array.isArray(files.value) && files.value.length > 0
+);
+
+const globalStore = useGlobalStore();
+
+// 作业数据及状态管理
 const {
   assignments,
   selectedId,
   currentStatus,
   currentAssignment,
   fetchAssignments,
-  selectAssignment,
-} = useAssignments(classUuids);
+} = useAssignments(globalStore.classUuids);
+const route = useRoute();
+const router = useRouter();
 
-// UI 状态
-const visible = ref(false);
-const popoverStyle = ref({ top: "0px", left: "0px", position: "absolute" });
-const showMobileSearch = ref(false);
-const files = ref([]);
-const uploaderRef = ref(null);
+// DOM 和 UI 控制
 const showTopShadow = ref(false);
 const scrollbarRef = ref(null);
 const isInitial = ref(true);
 const shareQRDialog = ref(null);
 const windowWidth = ref(window.innerWidth);
 const user = ref(null);
+const showAvatar = computed(() => windowWidth.value > 1000);
 const showHeaderAndFooter = ref(true);
 const uploadDialogOpen = ref(false);
-const submissionRef = ref(null);
-const isDynamicPageRef = ref(true);
-const submission = ref({ content: "", attachments: [] });
 
-const avatarRef = ref(null);
-const popoverRef = ref(null);
-let intervalId = null;
-
-const options = ref({
-  scrollbars: { autoHide: "leave", autoHideDelay: 500 },
-});
-
-// --- 逻辑函数 ---
+const openUploadDialog = () => {
+  uploadDialogOpen.value = true;
+  console.log(files.value); // 在每次文件操作后输出
+};
 
 function updateWidth() {
   windowWidth.value = window.innerWidth;
 }
-const showAvatar = computed(() => windowWidth.value > 1000);
+const submissionRef = ref(null);
+const submission = ref({
+  content: "",
+  attachments: [],
+});
+
+function triggerUpload() {
+  submissionRef.value?.triggerUpload();
+}
+
+// 从提交页面返回时清空上传列表
+function goBackFromSubmission() {
+  showHeaderAndFooter.value = true;
+  isDynamicPageRef.value = true;
+  // 清空 uploaders（附件对话框与 submission 内部）
+  try {
+    uploaderRef.value?.clear && uploaderRef.value.clear();
+  } catch (e) {
+    console.error("clear uploaderRef failed", e);
+  }
+  try {
+    submissionRef.value?.clearAttachments &&
+      submissionRef.value.clearAttachments();
+  } catch (e) {
+    console.error("clear submissionRef failed", e);
+  }
+  files.value = [];
+}
+
+// 调用 AttachmentUploader 的 pick 方法以选择文件
+function pickAttachment() {
+  uploaderRef.value?.pick();
+}
+
+// 监听 files，文件列表为空时自动关闭上传对话框
+watch(files, (v) => {
+  console.log("父组件 files:", v);
+  if (!Array.isArray(v) || v.length === 0) {
+    uploadDialogOpen.value = false;
+  }
+});
+
+const props = defineProps({
+  filterStatus: String,
+  modelValue: Object,
+  isDynamicPage: { type: Boolean, default: true }, // 默认 true
+});
+defineEmits(["update:modelValue"]);
+const isDynamicPageRef = ref(props.isDynamicPage);
+
+// 进入提交模式
+function enterSubmissionMode() {
+  isDynamicPageRef.value = false;
+  showHeaderAndFooter.value = false;
+}
+
+// 处理 SubmissionCard 的 submit 事件
+async function handleSubmit(payload) {
+  console.log("handleSubmit invoked with payload:", payload);
+
+  if (!payload) {
+    console.warn("payload is empty");
+    return;
+  }
+
+  const assignmentId = currentAssignment.value?.uuid;
+  const classUuid = currentAssignment.value?.class_uuid;
+
+  if (!assignmentId || !classUuid) {
+    console.error("无法获取 assignmentId 或 classUuid");
+    return;
+  }
+
+  // content 必填校验
+  if (!payload.content || payload.content.trim().length === 0) {
+    const snackbar = document.querySelector(".upload_snackbar");
+    snackbar.textContent = "提交内容不能为空";
+    console.warn("提交内容不能为空");
+    snackbar.open = true;
+    return;
+  }
+
+  try {
+    console.log("Submitting assignment:", {
+      classUuid,
+      assignmentId,
+      contentLength: payload.content.length,
+      attachmentCount: payload.attachments?.length,
+    });
+    // 上传并提交
+    await submitAssignment(
+      classUuid,
+      assignmentId,
+      payload.content,
+      payload.attachments || []
+    );
+
+    // 提交成功后清空 UI
+    files.value = [];
+    uploaderRef.value?.clear && uploaderRef.value.clear();
+    submissionRef.value?.clearAttachments &&
+      submissionRef.value.clearAttachments();
+
+    // 恢复主视图
+    showHeaderAndFooter.value = true;
+    isDynamicPageRef.value = true;
+
+    // 标记当前作业为已提交，并刷新作业列表以更新按钮状态
+    if (currentAssignment && currentAssignment.value) {
+      currentAssignment.value.submitted = true;
+    }
+    try {
+      fetchAssignments(currentStatus.value);
+    } catch (e) {
+      console.warn("刷新作业列表失败", e);
+    }
+
+    console.log("提交成功");
+    const snackbar = document.querySelector(".upload_snackbar");
+    if (snackbar) {
+      snackbar.textContent = "提交成功";
+      snackbar.open = true;
+    } else {
+      // 兼容情况：如果没有 mdui snackbar，使用浏览器控制台提示
+      console.log("提交成功（无 snackbar 元素）");
+    }
+  } catch (e) {
+    console.error("提交失败", e);
+    const snackbar = document.querySelector(".upload_snackbar");
+    snackbar.textContent = "未知错误";
+    snackbar.open = true;
+  }
+}
+
+// 解析 content 字符串为数组
+const parsedContent = computed(() => {
+  if (!currentAssignment.value.content) return [];
+  try {
+    return JSON.parse(currentAssignment.value.content);
+  } catch (e) {
+    console.error("解析作业内容失败", e);
+    return [];
+  }
+});
+
+// 当前作业链接，用于生成二维码
+const currentUrl = computed(() => {
+  return window.location.origin + "/assignment/" + selectedId.value;
+});
+
+// 跳转首页并刷新
+function refreshHome() {
+  window.location.href = "/";
+}
+const avatarRef = ref(null);
+const popoverRef = ref(null);
 
 function onAvatarClick() {
   visible.value = !visible.value;
-  nextTick(updatePopoverPosition);
+  nextTick(updatePopoverPosition); // DOM 更新后计算位置
 }
-
 const onClickOutside = (e) => {
   if (
     visible.value &&
@@ -619,84 +782,187 @@ const onClickOutside = (e) => {
   }
 };
 
-function removeFile(index) {
-  files.value = files.value.filter((_, idx) => idx !== index);
-  if (files.value.length === 0) uploadDialogOpen.value = false;
-}
-
-function goBackFromSubmission() {
-  showHeaderAndFooter.value = true;
-  isDynamicPageRef.value = true;
-  uploaderRef.value?.clear?.();
-  submissionRef.value?.clearAttachments?.();
-  files.value = [];
-}
-
-async function handleSubmit(payload) {
-  const assignmentId = currentAssignment.value?.uuid;
-  const classUuid = currentAssignment.value?.class_uuid;
-  if (!assignmentId || !classUuid) return;
-
-  if (!payload.content?.trim()) {
-    const snackbar = document.querySelector(".upload_snackbar");
-    snackbar.textContent = "提交内容不能为空";
-    snackbar.open = true;
-    return;
-  }
-
-  try {
-    await submitAssignment(
-      classUuid,
-      assignmentId,
-      payload.content,
-      payload.attachments || []
-    );
-    goBackFromSubmission();
-    if (currentAssignment.value) currentAssignment.value.submitted = true;
-    fetchAssignments(currentStatus.value);
-    const snackbar = document.querySelector(".upload_snackbar");
-    snackbar.textContent = "提交成功";
-    snackbar.open = true;
-  } catch (e) {
-    console.error("提交失败", e);
-  }
-}
-
-const parsedContent = computed(() => {
-  if (!currentAssignment.value?.content) return [];
-  try {
-    return JSON.parse(currentAssignment.value.content);
-  } catch (e) {
-    return [];
-  }
+// OverlayScrollbars 配置
+const options = ref({
+  scrollbars: { autoHide: "leave", autoHideDelay: 500 },
 });
 
-const currentUrl = computed(
-  () => window.location.origin + "/assignment/" + selectedId.value
-);
-
-function refreshHome() {
-  window.location.href = "/";
-}
-
+// 搜索选择事件
 function onSearchSelect(item) {
   showMobileSearch.value = false;
   router.push({ name: "AssignmentDetail", params: { id: item.uuid } });
+  nextTick(() => {
+    const el = document.querySelector(`#assignment-${item.uuid}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
 }
 
+// 打开二维码分享弹窗
+function openShareQRDialog() {
+  if (shareQRDialog.value) {
+    shareQRDialog.value.open = true;
+  }
+}
+
+// 路由 id 变化，更新选中作业
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId) {
+      selectedId.value = newId;
+
+      // 切换作业时恢复顶部和底部显示
+      showHeaderAndFooter.value = true;
+
+      // 动态渲染模式也恢复
+      isDynamicPageRef.value = true;
+    }
+  }
+);
+
+// 导航栏折叠状态
 const toggle = ref(localStorage.getItem("navToggle") === "1");
 const contentPaddingLeft = ref(toggle.value ? 48 : 8);
 
+// 导航栏折叠事件
 function onMenuClick() {
   toggle.value = !toggle.value;
   localStorage.setItem("navToggle", toggle.value ? "1" : "0");
   contentPaddingLeft.value = toggle.value ? 48 : 8;
 }
 
+// 页面挂载后允许动画
+onMounted(async () => {
+  window.addEventListener("resize", updatePopoverPosition);
+  window.addEventListener("scroll", updatePopoverPosition, true); // 捕获滚动事件
+  document.addEventListener("click", onClickOutside);
+
+  window.addEventListener("resize", updateWidth); // 页面宽度变化
+  try {
+    const res = await getProfile();
+    user.value = res.data.data;
+  } catch {
+    user.value = null;
+  }
+
+  isInitial.value = false;
+});
+
+// 切换主题
+function toggleTheme() {
+  let theme = getTheme();
+  if (theme === "auto") {
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    theme = prefersDark ? "dark" : "light";
+  }
+
+  if (theme === "dark") {
+    setTheme("light");
+    localStorage.setItem("theme", "light");
+  } else {
+    setTheme("dark");
+    localStorage.setItem("theme", "dark");
+  }
+}
+
+// 跳转作业详情
+function goDetail(id) {
+  selectedId.value = id;
+  router.push({ name: "AssignmentDetail", params: { id } });
+}
+
+// 筛选按钮事件
+function onStatusChange(filterStatus) {
+  currentStatus.value = filterStatus;
+  fetchAssignments(filterStatus);
+}
+
+// 页面挂载初始化
+let intervalId = null;
+onMounted(async () => {
+  window.addEventListener("resize", updateWidth);
+  isInitial.value = false;
+
+  // 获取班级列表
+  let res = null;
+  try {
+    res = await getClass();
+  } catch (e) {
+    console.error("getClass failed", e);
+  }
+  const classList = res?.items?.map((i) => i.class_uuid).filter(Boolean) ?? [];
+  globalStore.setClassUuids(classList);
+
+  // 初始化滚动条
+  const osInstance = scrollbarRef.value?.osInstance();
+  if (!osInstance) return;
+  osInstance.elements().viewport.addEventListener("scroll", onScroll);
+
+  // 初次加载作业列表
+  fetchAssignments(currentStatus.value);
+
+  // 定时刷新作业列表和徽章
+  intervalId = setInterval(async () => {
+    try {
+      let totalBadge = 0;
+      for (const cls of globalStore.classUuids) {
+        const res = await getAssignments(
+          cls,
+          1,
+          10,
+          "created_at",
+          "asc",
+          "pending"
+        );
+        totalBadge += res.pagination?.total || 0;
+      }
+      globalStore.setBadgeCount(totalBadge);
+
+      // 刷新作业列表
+      fetchAssignments(currentStatus.value);
+    } catch (e) {
+      console.error("刷新作业失败", e);
+    }
+  }, 60000);
+});
+
+// 滚动事件，显示顶部阴影
 function onScroll() {
   const osInstance = scrollbarRef.value?.osInstance();
-  showTopShadow.value = (osInstance?.elements().viewport.scrollTop || 0) > 0;
+  if (!osInstance) return;
+  const scrollTop = osInstance.elements().viewport.scrollTop;
+  showTopShadow.value = scrollTop > 0;
 }
+
+// 页面卸载
+onBeforeUnmount(() => {
+  const osInstance = scrollbarRef.value?.osInstance();
+  if (!osInstance) return;
+  osInstance.elements().viewport.removeEventListener("scroll", onScroll);
+  // 离开页面时清空上传列表
+  try {
+    uploaderRef.value?.clear && uploaderRef.value.clear();
+  } catch (e) {
+    console.error("clear uploaderRef failed onBeforeUnmount", e);
+  }
+  try {
+    submissionRef.value?.clearAttachments &&
+      submissionRef.value.clearAttachments();
+  } catch (e) {
+    console.error("clear submissionRef failed onBeforeUnmount", e);
+  }
+});
+
+onUnmounted(() => {
+  clearInterval(intervalId);
+  // 清理 window 和 document 事件
+  window.removeEventListener("resize", updateWidth);
+  window.removeEventListener("resize", updatePopoverPosition);
+  window.removeEventListener("scroll", updatePopoverPosition, true);
+  document.removeEventListener("click", onClickOutside);
+});
 
 function resolveBlock(type) {
   const map = {
@@ -705,9 +971,10 @@ function resolveBlock(type) {
     attachment: AttachmentBlock,
     tip: TipBlock,
   };
-  return map[type] || TextBlock;
+  return map[type] || UnknownBlock; // UnknownBlock 用于处理未知类型
 }
 
+// 登出逻辑
 function logout() {
   localStorage.removeItem("access_token");
   router.replace({ name: "Login" });
@@ -718,65 +985,13 @@ function updatePopoverPosition() {
   if (!avatarRef.value || !visible.value) return;
   const rect = avatarRef.value.getBoundingClientRect();
   popoverStyle.value = {
-    top: rect.bottom + window.scrollY + 12 + "px",
-    left: rect.left + window.scrollX - 360 + "px",
+    top: rect.bottom + window.scrollY + 12 + "px", // 头像下方 8px
+    left: rect.left + window.scrollX + -360 + "px",
     position: "absolute",
   };
 }
-
-// --- 生命周期 ---
-
-onMounted(async () => {
-  // 1. 初始化事件监听
-  window.addEventListener("resize", updateWidth);
-  window.addEventListener("resize", updatePopoverPosition);
-  window.addEventListener("scroll", updatePopoverPosition, true);
-  document.addEventListener("click", onClickOutside);
-  isInitial.value = false;
-
-  // 2. 获取用户信息
-  getProfile()
-    .then((res) => (user.value = res.data.data))
-    .catch(() => (user.value = null));
-
-  // 3. 获取班级列表并触发数据流
-  try {
-    const res = await getClass();
-    const list = res?.items?.map((i) => i.class_uuid).filter(Boolean) ?? [];
-    classUuids.value = list; // 这一步会触发 useAssignments 内部的获取作业逻辑
-    globalStore.setClassUuids(list);
-  } catch (e) {
-    console.error("初始化班级失败", e);
-  }
-
-  // 4. 初始化滚动条监听
-  nextTick(() => {
-    const osInstance = scrollbarRef.value?.osInstance();
-    osInstance?.elements().viewport.addEventListener("scroll", onScroll);
-  });
-
-  // 5. 轮询更新徽章
-  intervalId = setInterval(async () => {
-    if (classUuids.value.length > 0) {
-      // 简单刷新当前列表
-      fetchAssignments(currentStatus.value);
-    }
-  }, 60000);
-});
-
-onBeforeUnmount(() => {
-  const osInstance = scrollbarRef.value?.osInstance();
-  osInstance?.elements().viewport.removeEventListener("scroll", onScroll);
-  clearInterval(intervalId);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", updateWidth);
-  window.removeEventListener("resize", updatePopoverPosition);
-  window.removeEventListener("scroll", updatePopoverPosition, true);
-  document.removeEventListener("click", onClickOutside);
-});
 </script>
+
 <style>
 /* 顶部滚动阴影 */
 .top-shadow {
