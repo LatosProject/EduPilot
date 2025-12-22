@@ -140,6 +140,8 @@ async function fetchSuggestions(query) {
             .then(res =>
               res.items.map(item => ({
                 title: item.title,
+                content: item.content,
+                description: item.description,
                 created_by: item.created_by,
                 dueDate: formatDeadline(item.deadline),
                 uuid: item.uuid,
@@ -152,6 +154,8 @@ async function fetchSuggestions(query) {
       const lowerQuery = query.toLowerCase();
       suggestions.value = results.flat().filter(item =>
         (item.title && item.title.toLowerCase().includes(lowerQuery)) ||
+        (item.description && item.description.toLowerCase().includes(lowerQuery)) ||
+        (item.content && item.content.toLowerCase().includes(lowerQuery)) ||
         (item.created_by && item.created_by.toLowerCase().includes(lowerQuery))
       );
     } catch (err) {

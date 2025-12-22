@@ -486,12 +486,13 @@ async def get_assignments(
             # fallback：按数据库中 AssignmentModel.status 字段过滤
             stmt = stmt.where(AssignmentModel.status == status)
 
-    # 模糊搜索（匹配 title 或 description）
+    # 模糊搜索（匹配 title、description 或 content）
     if search:
         stmt = stmt.where(
             or_(
                 AssignmentModel.title.ilike(f"%{search}%"),
                 AssignmentModel.description.ilike(f"%{search}%"),
+                AssignmentModel.content.ilike(f"%{search}%"),
             )
         )
     # 排序字段和方向
@@ -563,6 +564,7 @@ async def get_assignments(
             or_(
                 AssignmentModel.title.ilike(f"%{search}%"),
                 AssignmentModel.description.ilike(f"%{search}%"),
+                AssignmentModel.content.ilike(f"%{search}%"),
             )
         )
 
